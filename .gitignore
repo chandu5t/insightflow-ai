@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Environment files and secrets (NEVER commit these)
+.env
+.env.*
+!.env.example
+
+# Node / frontend
+node_modules/
+dist/
+*.log
+npm-debug.log*
+
+# Uploaded datasets (generated at runtime; keep the folder, ignore the contents)
+backend/data/uploads/*
+!backend/data/uploads/.gitkeep
+
+# Editors and OS files
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
