@@ -5,8 +5,10 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.dataset_routes import router as dataset_router
 from app.api.health_routes import router as health_router
 from app.core.config import get_settings
+from app.core.errors import register_exception_handlers
 from app.core.logging_config import setup_logging
 
 settings = get_settings()
@@ -31,7 +33,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+register_exception_handlers(app)
+
 app.include_router(health_router)
+app.include_router(dataset_router)
 
 logger.info(
     "%s v%s configured (environment=%s, allowed origins=%s)",

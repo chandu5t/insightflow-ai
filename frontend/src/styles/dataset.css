@@ -1,0 +1,101 @@
+/* Styles for Module 2 (upload and preview). Module 1 styles stay in App.css. */
+
+.card + .card {
+  margin-top: 1rem;
+}
+
+.upload-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+button:disabled {
+  background: #9aa5b1;
+  cursor: not-allowed;
+}
+
+.hint {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #52606d;
+}
+
+.error-box {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid #f5b5b5;
+  border-radius: 8px;
+  background: #fff5f5;
+}
+
+.error-box .error-message {
+  margin: 0;
+  font-weight: 600;
+}
+
+.error-code {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: #7b1e1e;
+}
+
+.error-details {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.9rem;
+  color: #7b1e1e;
+}
+
+.warning-list {
+  margin: 0.5rem 0;
+  padding: 0.6rem 1rem 0.6rem 2rem;
+  border: 1px solid #f0d58c;
+  border-radius: 8px;
+  background: #fffbea;
+  color: #6b4e00;
+  font-size: 0.9rem;
+}
+
+.preview-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.preview-table th,
+.preview-table td {
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid #e4e7eb;
+  text-align: left;
+  white-space: nowrap;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preview-table th {
+  background: #f0f4f8;
+  color: #334e68;
+}
+
+.empty-cell {
+  color: #9aa5b1;
+  font-style: italic;
+}
