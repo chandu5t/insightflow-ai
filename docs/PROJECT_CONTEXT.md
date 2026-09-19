@@ -7,7 +7,7 @@ _Paste this file at the start of any new Claude conversation._
 
 - **Completed modules:** 1 (Foundation and health check)
 - **Next module:** 2 (CSV upload, validation, storage)
-- **Git tag:** `module-1` (to be created after commit)
+- **Git tag:** `module-1` (created and pushed)
 
 ## Environment
 
