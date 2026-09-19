@@ -1,13 +1,10 @@
-````markdown
 # InsightFlow AI – Business Data Analyst Agent
 
-InsightFlow AI lets you upload a business CSV or Excel file and ask questions in plain English,
+InsightFlow AI lets you upload a business CSV or Excel file and ask questions in plain English, such as:
 
-such as "Which region generated the highest revenue?". Python and Pandas perform every
+> Which region generated the highest revenue?
 
-calculation. The LLM (Google Gemini) only understands the question and explains results
-
-that have already been validated.
+Python and Pandas perform every calculation. The LLM (Google Gemini) only understands the question and explains results that have already been validated.
 
 > **Status:** Under development. Module 2 of 8 (data ingestion).
 
@@ -15,7 +12,7 @@ that have already been validated.
 
 Planned for V1 (built module by module):
 
-- CSV and Excel (.xlsx, first sheet) upload with validation and a small data preview
+- CSV and Excel (`.xlsx`, first sheet) upload with validation and a small data preview
 - Dataset profiling (rows, columns, types, missing values, duplicates)
 - Controlled analysis tools: aggregation, grouping, ranking, missing-value analysis
 - Natural-language questions using Gemini
@@ -30,7 +27,7 @@ Planned for V1 (built module by module):
 |---|---|
 | Backend | Python, FastAPI, Pydantic |
 | Data processing | Pandas |
-| File parsing | Python csv module, openpyxl |
+| File parsing | Python `csv` module, openpyxl |
 | LLM | Google Gemini |
 | Workflow / RAG | LangGraph, LangChain, PostgreSQL, pgvector |
 | Frontend | React + TypeScript (Vite) |
@@ -39,9 +36,9 @@ Planned for V1 (built module by module):
 
 ## Architecture
 
-React → FastAPI → LangGraph workflow → approved Python tools (Pandas) → result validator
+React → FastAPI → LangGraph workflow → approved Python tools (Pandas) → result validator → Gemini explanation → JSON response.
 
-→ Gemini explanation → JSON response. Detailed diagrams are added in later modules.
+Detailed diagrams are added in later modules.
 
 ## Folder Structure
 
@@ -51,9 +48,11 @@ See `docs/PROJECT_CONTEXT.md` for the current structure.
 
 ### Prerequisites
 
-Python 3.11+ (3.12 recommended), Node.js LTS, Git.
+- Python 3.11+ (3.12 recommended)
+- Node.js LTS
+- Git
 
-### Backend setup (Windows PowerShell)
+### Backend Setup (Windows PowerShell)
 
 ```powershell
 cd backend
@@ -65,9 +64,9 @@ python -m venv .venv
 python -m pip install -r requirements.txt
 
 Copy-Item .env.example .env
-````
+```
 
-### Frontend setup
+### Frontend Setup
 
 ```powershell
 cd frontend
@@ -79,19 +78,19 @@ Copy-Item .env.example .env
 
 ## Environment Setup
 
-| File            | Variable                                    | Purpose                                               |
-| --------------- | ------------------------------------------- | ----------------------------------------------------- |
-| `backend/.env`  | `ENVIRONMENT`                               | `development` or `production`                         |
-| `backend/.env`  | `LOG_LEVEL`                                 | `DEBUG`, `INFO`, `WARNING`, or `ERROR`                |
-| `backend/.env`  | `CORS_ORIGINS`                              | Comma-separated frontend URLs allowed to call the API |
-| `backend/.env`  | `MAX_UPLOAD_SIZE_MB`                        | Maximum upload size (default 10 MB)                   |
-| `backend/.env`  | `MAX_ROWS` / `MAX_COLUMNS`                  | Table limits (default 100000 / 100)                   |
-| `backend/.env`  | `PREVIEW_DEFAULT_ROWS` / `PREVIEW_MAX_ROWS` | Preview size (default 5 / 20)                         |
-| `frontend/.env` | `VITE_API_URL`                              | Backend URL used by React                             |
+| File | Variable | Purpose |
+|---|---|---|
+| `backend/.env` | `ENVIRONMENT` | `development` or `production` |
+| `backend/.env` | `LOG_LEVEL` | `DEBUG`, `INFO`, `WARNING`, or `ERROR` |
+| `backend/.env` | `CORS_ORIGINS` | Comma-separated frontend URLs allowed to call the API |
+| `backend/.env` | `MAX_UPLOAD_SIZE_MB` | Maximum upload size (default: 10 MB) |
+| `backend/.env` | `MAX_ROWS` / `MAX_COLUMNS` | Table limits (default: 100000 / 100) |
+| `backend/.env` | `PREVIEW_DEFAULT_ROWS` / `PREVIEW_MAX_ROWS` | Preview size (default: 5 / 20) |
+| `frontend/.env` | `VITE_API_URL` | Backend URL used by React |
 
 All environment variables listed above are optional unless otherwise specified.
 
-Never commit `.env` files.
+> **Important:** Never commit `.env` files.
 
 ## Running the Backend
 
@@ -103,7 +102,9 @@ cd backend
 uvicorn app.main:app --reload --port 8000
 ```
 
-API docs: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+API documentation:
+
+[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
 ## Running the Frontend
 
@@ -113,7 +114,9 @@ cd frontend
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173)
+Open:
+
+[http://localhost:5173](http://localhost:5173)
 
 ## Running Tests
 
@@ -131,11 +134,11 @@ Docker support is added progressively. Docker Compose and the full stack are pla
 
 ## API Endpoints
 
-| Method | Path                             | Description                                     | Module |
-| ------ | -------------------------------- | ----------------------------------------------- | ------ |
-| GET    | `/health`                        | Backend health check                            | 1      |
-| POST   | `/datasets/upload`               | Upload a CSV or `.xlsx` file                    | 2      |
-| GET    | `/datasets/{dataset_id}/preview` | First rows of a dataset (default 5, maximum 20) | 2      |
+| Method | Path | Description | Module |
+|---|---|---|---|
+| GET | `/health` | Backend health check | 1 |
+| POST | `/datasets/upload` | Upload a CSV or `.xlsx` file | 2 |
+| GET | `/datasets/{dataset_id}/preview` | First rows of a dataset (default: 5, maximum: 20) | 2 |
 
 ## Screenshots
 
@@ -147,9 +150,7 @@ See the version plan (V1.5, V2.0, V3.0) in the Technical Design Document.
 
 ## Author
 
-Chandrakant Thakare
+**Chandrakant Thakare**
 
-* GitHub: [chandu5t](https://github.com/chandu5t)
-* LinkedIn: [www.linkedin.com/in/chandrakant-thakare-89994728b](http://www.linkedin.com/in/chandrakant-thakare-89994728b)
-
-````
+- GitHub: [chandu5t](https://github.com/chandu5t)
+- LinkedIn: [www.linkedin.com/in/chandrakant-thakare-89994728b](https://www.linkedin.com/in/chandrakant-thakare-89994728b)
