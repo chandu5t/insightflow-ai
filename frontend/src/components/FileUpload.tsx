@@ -11,28 +11,50 @@ type UploadState =
 
 type FileUploadProps = {
   onUploaded: (dataset: DatasetSummary) => void;
+  onUploadStart?: () => void;
 };
 
-function FileUpload({ onUploaded }: FileUploadProps) {
+function FileUpload({
+  onUploaded,
+  onUploadStart,
+}: FileUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [state, setState] = useState<UploadState>({ phase: "idle" });
 
-  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+  const [state, setState] = useState<UploadState>({
+    phase: "idle",
+  });
+
+  function handleFileChange(
+    event: ChangeEvent<HTMLInputElement>,
+  ) {
     setSelectedFile(event.target.files?.[0] ?? null);
     setState({ phase: "idle" });
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ) {
     event.preventDefault();
+
     if (!selectedFile) {
       return;
     }
+
+    // Clear the previous dataset preview and profile
+    // before starting a new upload.
+    onUploadStart?.();
 
     setState({ phase: "uploading" });
 
     try {
       const dataset = await uploadDataset(selectedFile);
-      setState({ phase: "success", dataset });
+
+      setState({
+        phase: "success",
+        dataset,
+      });
+
+      // Update the dashboard with the newly uploaded dataset.
       onUploaded(dataset);
     } catch (error: unknown) {
       setState({
@@ -62,28 +84,39 @@ function FileUpload({ onUploaded }: FileUploadProps) {
           disabled={isUploading}
           aria-label="Choose a CSV or XLSX file"
         />
-        <button type="submit" disabled={!selectedFile || isUploading}>
+
+        <button
+          type="submit"
+          disabled={!selectedFile || isUploading}
+        >
           {isUploading ? "Uploading..." : "Upload"}
         </button>
       </form>
 
       <p className="hint">
-        Supported files: .csv and .xlsx (first sheet only). The first row must
-        contain the column names.
+        Supported files: .csv and .xlsx (first sheet only).
+        The first row must contain the column names.
       </p>
 
       {state.phase === "uploading" && (
-        <p className="status status-loading">Uploading and validating...</p>
+        <p className="status status-loading">
+          Uploading and validating...
+        </p>
       )}
 
-      {state.phase === "error" && <ErrorMessage error={state.error} />}
+      {state.phase === "error" && (
+        <ErrorMessage error={state.error} />
+      )}
 
       {state.phase === "success" && (
         <div>
           <p className="status status-healthy">
             Upload successful ({state.dataset.status})
           </p>
-          <p className="hint">Dataset ID: {state.dataset.dataset_id}</p>
+
+          <p className="hint">
+            Dataset ID: {state.dataset.dataset_id}
+          </p>
 
           {state.dataset.warnings.length > 0 && (
             <ul className="warning-list">

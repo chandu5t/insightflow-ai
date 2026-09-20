@@ -7,7 +7,8 @@ from fastapi import APIRouter, Depends, File, Query, UploadFile
 from app.core.config import Settings, get_settings
 from app.schemas.dataset_schema import DatasetPreview, DatasetSummary
 from app.schemas.error_schema import ErrorResponse
-from app.services import dataset_service
+from app.schemas.profile_schema import DatasetProfile
+from app.services import dataset_service, profiling_service
 from app.services.dataset_repository import DatasetRepository, JsonDatasetRepository
 
 router = APIRouter(prefix="/datasets", tags=["Datasets"])
@@ -54,6 +55,24 @@ def preview_dataset(
     return dataset_service.get_dataset_preview(
         raw_dataset_id=dataset_id,
         rows=rows,
+        settings=settings,
+        repository=repository,
+    )
+
+
+@router.get(
+    "/{dataset_id}/profile",
+    response_model=DatasetProfile,
+    responses={404: {"model": ErrorResponse}, 422: {"model": ErrorResponse}},
+)
+def profile_dataset(
+    dataset_id: str,
+    settings: Settings = Depends(get_settings),
+    repository: DatasetRepository = Depends(get_dataset_repository),
+) -> DatasetProfile:
+    """Return the profile of a dataset: types, missing values, statistics and limited value lists."""
+    return profiling_service.get_dataset_profile(
+        raw_dataset_id=dataset_id,
         settings=settings,
         repository=repository,
     )

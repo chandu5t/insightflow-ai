@@ -29,6 +29,13 @@ class ErrorCode(StrEnum):
     INVALID_DATASET_ID = "INVALID_DATASET_ID"
     DATASET_NOT_FOUND = "DATASET_NOT_FOUND"
     INVALID_PREVIEW_ROWS = "INVALID_PREVIEW_ROWS"
+    # Profiling and analysis tool problems (Module 3)
+    DATASET_UNREADABLE = "DATASET_UNREADABLE"
+    MISSING_COLUMN = "MISSING_COLUMN"
+    AMBIGUOUS_COLUMN = "AMBIGUOUS_COLUMN"
+    INSUFFICIENT_DATA = "INSUFFICIENT_DATA"
+    INVALID_NUMERIC_VALUES = "INVALID_NUMERIC_VALUES"
+    INVALID_PARAMETER = "INVALID_PARAMETER"
     # General problems
     VALIDATION_ERROR = "VALIDATION_ERROR"
     NOT_FOUND = "NOT_FOUND"
@@ -53,6 +60,21 @@ class AppError(Exception):
         self.status_code = status_code
         self.details = details or {}
 
+class ToolError(AppError):
+    """An analysis tool cannot give a result (missing column, bad numbers, not enough data).
+
+    If it ever reaches a route, the normal handler returns HTTP 422 in the standard format.
+    In Module 4 the question service will catch ToolError and answer with
+    status "insufficient_data" instead (decision D-003).
+    """
+
+    def __init__(
+        self,
+        code: ErrorCode,
+        message: str,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(code, message, status_code=422, details=details)
 
 def _error_response(
     status_code: int,

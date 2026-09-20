@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     preview_default_rows: int = Field(default=5, gt=0)
     preview_max_rows: int = Field(default=20, gt=0)
     preview_max_cell_length: int = Field(default=100, ge=10)
+    # ---- Profiling (Module 3) ----
+    # Number of most common values shown per column.
+    profile_top_values: int = Field(default=10, gt=0)
+    # Maximum length of values displayed in the profile.
+    profile_value_max_length: int = Field(default=50, ge=10)
 
     model_config = SettingsConfigDict(
         env_file=BACKEND_DIR / ".env",

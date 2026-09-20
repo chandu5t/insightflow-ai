@@ -2,6 +2,7 @@
 
 import type { ApiErrorBody } from "../types/api";
 import type { DatasetPreviewResponse, DatasetSummary } from "../types/dataset";
+import type { DatasetProfileResponse } from "../types/profile";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
@@ -108,4 +109,12 @@ export function getDatasetPreview(
   return request(
     `/datasets/${encodeURIComponent(datasetId)}/preview${query}`,
   ) as Promise<DatasetPreviewResponse>;
+}
+
+export function getDatasetProfile(
+  datasetId: string,
+): Promise<DatasetProfileResponse> {
+  return request(
+    `/datasets/${encodeURIComponent(datasetId)}/profile`,
+  ) as Promise<DatasetProfileResponse>;
 }
