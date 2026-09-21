@@ -6,7 +6,7 @@ InsightFlow AI lets you upload a business CSV or Excel file and ask questions in
 
 Python and Pandas perform every calculation. The LLM (Google Gemini) only understands the question and explains results that have already been validated.
 
-> **Status:** Under development. Module 3 of 8 (data profiling and controlled analysis tools).
+> **Status:** Module 4 of 8 (question understanding with Gemini).
 
 ## Features
 
@@ -28,6 +28,7 @@ Implemented and planned for V1:
   - Grouping
   - Ranking
   - Missing-value analysis
+- Ask questions in plain English (Gemini classification with a rule-based fallback)
 - Natural-language questions using Google Gemini
 - LangGraph workflow with result validation
 - Basic RAG for business metric definitions (PostgreSQL + pgvector)
@@ -50,7 +51,9 @@ Implemented and planned for V1:
 
 ## Architecture
 
-React → FastAPI → Dataset Profiling → LangGraph Workflow → Approved Python Tools (Pandas) → Result Validator → Gemini Explanation → JSON Response.
+React → FastAPI → Dataset Profiling → Question Classifier → Approved Python Tools (Pandas) → Result Validator → Template Explanation → JSON Response.
+
+Gemini is used for question classification when configured. A built-in rule-based classifier is used as a fallback. Numerical calculations remain inside Python and Pandas analysis tools.
 
 Detailed diagrams are added in later modules.
 
@@ -102,11 +105,17 @@ Copy-Item .env.example .env
 | `backend/.env` | `PREVIEW_DEFAULT_ROWS` / `PREVIEW_MAX_ROWS` | Preview size (default: 5 / 20) |
 | `backend/.env` | `PROFILE_TOP_VALUES` | Maximum categorical values shown in profiling results |
 | `backend/.env` | `PROFILE_VALUE_MAX_LENGTH` | Maximum length of displayed categorical values |
+| `backend/.env` | `GEMINI_API_KEY` | Gemini API key; backend only and never commit |
+| `backend/.env` | `GEMINI_MODEL` | Gemini model used for question classification |
+| `backend/.env` | `GEMINI_TIMEOUT_SECONDS` | Gemini request timeout in seconds |
+| `backend/.env` | `GEMINI_MIN_CONFIDENCE` | Minimum confidence required to accept Gemini classification |
+| `backend/.env` | `MAX_QUESTION_LENGTH` | Maximum allowed question length |
+| `backend/.env` | `CURRENCY_SYMBOL` | Currency symbol used in explanations (default: `₹`) |
 | `frontend/.env` | `VITE_API_URL` | Backend URL used by React |
 
 All environment variables listed above are optional unless otherwise specified.
 
-> **Important:** Never commit `.env` files.
+> **Important:** Never commit `.env` files or API keys.
 
 ## Running the Backend
 
@@ -146,9 +155,10 @@ pytest -v
 
 Current test status:
 
-- **402 tests passed**
+- **559 tests passed**
 - Backend unit tests and API tests
 - Profiling and analysis tool tests
+- Question classification, dispatching, validation, and explanation tests
 - Evaluation tests
 
 ## Docker
@@ -163,6 +173,7 @@ Docker support is added progressively. Docker Compose and the full stack are pla
 | POST | `/datasets/upload` | Upload a CSV or `.xlsx` file | 2 |
 | GET | `/datasets/{dataset_id}/preview` | First rows of a dataset (default: 5, maximum: 20) | 2 |
 | GET | `/datasets/{dataset_id}/profile` | Generate a complete dataset profile | 3 |
+| POST | `/analysis/query` | Ask a question about a dataset | 4 |
 
 ## Analysis Tools
 
@@ -178,6 +189,25 @@ Implemented in Module 3:
 | Profiling Tool | Generates dataset metadata, column statistics, data types, duplicates, and warnings |
 
 All analysis tools use deterministic Python and Pandas calculations. The LLM does not directly perform numerical calculations.
+
+## Asking Questions (Module 4)
+
+Type a question in plain English. Gemini (or a built-in rule-based fallback) only decides WHAT is asked.
+Python and Pandas calculate the answer, the result is validated, and the explanation comes from templates.
+
+| Question | Needs |
+|---|---|
+| What is the total revenue? | a revenue column, or quantity and unit price |
+| Revenue by region / Which region generated the highest revenue? | revenue fields and a region column |
+| What is the average unit price? / maximum quantity? | that column |
+| How many records are present? | nothing |
+| What is the average order value? | revenue fields and an order id |
+| Are there missing values? | nothing |
+| What is revenue? | not available yet (Module 7) |
+
+Setup: create a key in Google AI Studio and add `GEMINI_API_KEY=...` to `backend/.env` (never commit it).
+
+Without a key the rule-based classifier answers. Filters (for example one region or a date range) and forecasts are not supported.
 
 ## Screenshots
 

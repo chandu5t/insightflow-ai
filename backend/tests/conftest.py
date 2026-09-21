@@ -21,6 +21,8 @@ def make_client(upload_dir: Path) -> Iterator[Callable[..., TestClient]]:
     """Build a test client with custom settings, e.g. make_client(max_rows=3)."""
 
     def _make_client(**setting_overrides: object) -> TestClient:
+        # Tests must never use a real Gemini key that may exist in backend/.env.
+        setting_overrides.setdefault("gemini_api_key", None)
         test_settings = Settings(upload_dir=upload_dir, **setting_overrides)
         app.dependency_overrides[get_settings] = lambda: test_settings
         return TestClient(app)

@@ -3,6 +3,7 @@
 import type { ApiErrorBody } from "../types/api";
 import type { DatasetPreviewResponse, DatasetSummary } from "../types/dataset";
 import type { DatasetProfileResponse } from "../types/profile";
+import type { QueryResponse } from "../types/query";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
@@ -117,4 +118,16 @@ export function getDatasetProfile(
   return request(
     `/datasets/${encodeURIComponent(datasetId)}/profile`,
   ) as Promise<DatasetProfileResponse>;
+}
+
+
+export function askQuestion(
+  datasetId: string,
+  question: string,
+): Promise<QueryResponse> {
+  return request("/analysis/query", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dataset_id: datasetId, question }),
+  }) as Promise<QueryResponse>;
 }

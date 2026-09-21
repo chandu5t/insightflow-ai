@@ -2,8 +2,7 @@
 
 from functools import lru_cache
 from pathlib import Path
-
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # config.py lives in backend/app/core/, so parents[2] is the backend/ folder.
@@ -39,6 +38,16 @@ class Settings(BaseSettings):
     profile_top_values: int = Field(default=10, gt=0)
     # Maximum length of values displayed in the profile.
     profile_value_max_length: int = Field(default=50, ge=10)
+    # ---- Question answering (Module 4) ----
+    # Read from backend/.env. SecretStr hides the key in logs and repr().
+    gemini_api_key: SecretStr | None = None
+    gemini_model: str = "gemini-3.5-flash-lite"
+    gemini_timeout_seconds: float = Field(default=15, gt=0)
+    # Below this confidence a Gemini plan is ignored and the rule-based classifier is used.
+    gemini_min_confidence: float = Field(default=0.5, ge=0, le=1)
+    max_question_length: int = Field(default=500, gt=0)
+    # Shown before money amounts in explanations. The data files carry no currency.
+    currency_symbol: str = "₹"
 
     model_config = SettingsConfigDict(
         env_file=BACKEND_DIR / ".env",
@@ -71,6 +80,11 @@ class Settings(BaseSettings):
     def max_xlsx_uncompressed_bytes(self) -> int:
         return int(self.max_xlsx_uncompressed_mb * BYTES_PER_MB)
 
+    
+    @property
+    def gemini_api_key_value(self) -> str:
+        """The key as plain text, or "" when not set. Never log this value."""
+        return self.gemini_api_key.get_secret_value().strip() if self.gemini_api_key else ""
 
 @lru_cache
 def get_settings() -> Settings:

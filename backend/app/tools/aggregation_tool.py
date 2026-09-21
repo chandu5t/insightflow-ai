@@ -58,6 +58,22 @@ def calculate_average(
     result.value = safe_float(valid.mean()) or 0.0
     return result
 
+def calculate_minimum(
+    frame: pd.DataFrame, column: str, *, column_overrides: Mapping[str, str] | None = None
+) -> AggregationResult:
+    """Smallest valid value of a numeric column (or of "revenue" per row)."""
+    valid, result = _numeric_result("minimum", column, frame, column_overrides)
+    result.value = safe_float(valid.min()) or 0.0
+    return result
+
+
+def calculate_maximum(
+    frame: pd.DataFrame, column: str, *, column_overrides: Mapping[str, str] | None = None
+) -> AggregationResult:
+    """Largest valid value of a numeric column (or of "revenue" per row)."""
+    valid, result = _numeric_result("maximum", column, frame, column_overrides)
+    result.value = safe_float(valid.max()) or 0.0
+    return result
 
 def calculate_count(frame: pd.DataFrame, column: str | None = None) -> AggregationResult:
     """Without a column: number of rows. With a column: number of non-empty values in it."""
