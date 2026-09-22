@@ -1,110 +1,110 @@
-**\*\*# InsightFlow AI – Project Context\*\***
+**\*\*\\\*\\\*# InsightFlow AI – Project Context\\\*\\\*\*\***
 
-*\*\\\*Paste this file at the start of any new Claude conversation.\\\*\**
+*\*\\\*\\\\\\\*Paste this file at the start of any new Claude conversation.\\\\\\\*\\\*\**
 
-**\*\*## Current status\*\***
+**\*\*\\\*\\\*## Current status\\\*\\\*\*\***
 
-\\- **\*\*\\\*\\\*Completed modules:\\\*\\\*\*\*** 1, 2, 3, 4
+\\\\- **\*\*\\\*\\\*\\\\\\\*\\\\\\\*Completed modules:\\\\\\\*\\\\\\\*\\\*\\\*\*\*** 1, 2, 3, 4
 
-\\- **\*\*\\\*\\\*In progress:\\\*\\\*\*\*** None
+\\\\- **\*\*\\\*\\\*\\\\\\\*\\\\\\\*In progress:\\\\\\\*\\\\\\\*\\\*\\\*\*\*** None
 
-\\- **\*\*\\\*\\\*Next module:\\\*\\\*\*\*** 5 (LangGraph workflow)
+\\\\- **\*\*\\\*\\\*\\\\\\\*\\\\\\\*Next module:\\\\\\\*\\\\\\\*\\\*\\\*\*\*** 5 (LangGraph workflow)
 
-\\- **\*\*\\\*\\\*Git tags:\\\*\\\*\*\*** \\\`module-1\\\`, \\\`module-2\\\`, \\\`module-3\\\`, \\\`module-4\\\`
+\\\\- **\*\*\\\*\\\*\\\\\\\*\\\\\\\*Git tags:\\\\\\\*\\\\\\\*\\\*\\\*\*\*** \\\\\\\`module-1\\\\\\\`, \\\\\\\`module-2\\\\\\\`, \\\\\\\`module-3\\\\\\\`, \\\\\\\`module-4\\\\\\\`
 
-\\- **\*\*\\\*\\\*Repository:\\\*\\\*\*\*** https\\://github.com/chandu5t/insightflow-ai
+\\\\- **\*\*\\\*\\\*\\\\\\\*\\\\\\\*Repository:\\\\\\\*\\\\\\\*\\\*\\\*\*\*** https\\\\://github.com/chandu5t/insightflow-ai
 
   (public, so never commit secrets)
 
 Module 4 has been implemented and verified:
 
-\\- Backend: 633 tests passed, including Module 5 workflow, reconciliation and grounding tests.
+\\\\- Backend: 633 tests passed, including Module 5 workflow, reconciliation and grounding tests.
 
-\\- Frontend: build and lint passed.
+\\\\- Frontend: build and lint passed.
 
-\\- Manual API testing completed.
+\\\\- Manual API testing completed.
 
-\\- Browser testing completed for CSV and XLSX uploads.
+\\\\- Browser testing completed for CSV and XLSX uploads.
 
-\\- Dataset profile screen verified.
+\\\\- Dataset profile screen verified.
 
-\\- Empty-file error handling verified.
+\\\\- Empty-file error handling verified.
 
-\\- Dynamic preview clearing after failed uploads verified.
+\\\\- Dynamic preview clearing after failed uploads verified.
 
-**\*\*## Environment\*\***
+**\*\*\\\*\\\*## Environment\\\*\\\*\*\***
 
-\\- Windows 11, VS Code, PowerShell
+\\\\- Windows 11, VS Code, PowerShell
 
-\\- Project root: \\\`C:\dev\insightflow-ai\\\`
+\\\\- Project root: \\\\\\\`C:\dev\insightflow-ai\\\\\\\`
 
-\\- Python 3.12
+\\\\- Python 3.12
 
-\\- FastAPI 0.141.1
+\\\\- FastAPI 0.141.1
 
-\\- React 19
+\\\\- React 19
 
-\\- TypeScript 6
+\\\\- TypeScript 6
 
-\\- Vite 8
+\\\\- Vite 8
 
 Exact dependency versions are maintained in:
 
-\\- \\\`backend/requirements.txt\\\`
+\\\\- \\\\\\\`backend/requirements.txt\\\\\\\`
 
-\\- \\\`frontend/package.json\\\`
+\\\\- \\\\\\\`frontend/package.json\\\\\\\`
 
-**\*\*## Working agreements\*\***
+**\*\*\\\*\\\*## Working agreements\\\*\\\*\*\***
 
-\\- "TDD" means the **\*\*\\\*\\\*Technical Design Document\\\*\\\*\*\***.
+\\\\- "TDD" means the **\*\*\\\*\\\*\\\\\\\*\\\\\\\*Technical Design Document\\\\\\\*\\\\\\\*\\\*\\\*\*\***.
 
-\\- Use test-driven development where practical.
+\\\\- Use test-driven development where practical.
 
-\\- One module at a time.
+\\\\- One module at a time.
 
-\\- The developer confirms a module works before the next begins.
+\\\\- The developer confirms a module works before the next begins.
 
-\\- Each module guide is delivered in a single response (free Claude plan).
+\\\\- Each module guide is delivered in a single response (free Claude plan).
 
-\\- Windows PowerShell commands first.
+\\\\- Windows PowerShell commands first.
 
-\\- Frontend remains TypeScript (\\\`.tsx\\\` / \\\`.ts\\\`).
+\\\\- Frontend remains TypeScript (\\\\\\\`.tsx\\\\\\\` / \\\\\\\`.ts\\\\\\\`).
 
-\\- No architecture changes without discussion.
+\\\\- No architecture changes without discussion.
 
-\\- Nothing is committed or pushed automatically.
+\\\\- Nothing is committed or pushed automatically.
 
-\\- Never commit \\\`.env\\\` files, API keys, \\\`.venv/\\\`, \\\`node_modules/\\\` or uploaded datasets.
+\\\\- Never commit \\\\\\\`.env\\\\\\\` files, API keys, \\\\\\\`.venv/\\\\\\\`, \\\\\\\`node_modules/\\\\\\\` or uploaded datasets.
 
-\\- Python and Pandas calculate analytical values. LLMs must not calculate numerical results directly.
+\\\\- Python and Pandas calculate analytical values. LLMs must not calculate numerical results directly.
 
-\\- Module 4 sends only the question and limited column names to Gemini; raw preview rows and top categorical values are never sent.
+\\\\- Module 4 sends only the question and limited column names to Gemini; raw preview rows and top categorical values are never sent.
 
-**\*\*## Module status\*\***
+**\*\*\\\*\\\*## Module status\\\*\\\*\*\***
 
-\\| # | Module | Status |
+\\\\| # | Module | Status |
 
-\\|---|---|---|
+\\\\|---|---|---|
 
-\\| 1 | Foundation and health check | Complete (tag \\\`module-1\\\`) |
+\\\\| 1 | Foundation and health check | Complete (tag \\\\\\\`module-1\\\\\\\`) |
 
-\\| 2 | Data ingestion: CSV/.xlsx upload, validation, preview | Complete (tag \\\`module-2\\\`) |
+\\\\| 2 | Data ingestion: CSV/.xlsx upload, validation, preview | Complete (tag \\\\\\\`module-2\\\\\\\`) |
 
-\\| 3 | Profiling, column mapping, analysis tools | Complete (tag \\\`module-3\\\`) |
+\\\\| 3 | Profiling, column mapping, analysis tools | Complete (tag \\\\\\\`module-3\\\\\\\`) |
 
-\\| 4 | Question understanding with Gemini | Complete (tag \`module-4\`) |
+\\\\| 4 | Question understanding with Gemini | Complete (tag \\\`module-4\\\`) |
 
-\\| 5 | LangGraph workflow and result validation | Planned |
+\\\\| 5 | LangGraph workflow and result validation | Complete |
 
-\\| 6 | PostgreSQL integration (+ Docker Compose) | Planned |
+\\\\| 6 | PostgreSQL integration (+ Docker Compose) | Complete |
 
-\\| 7 | Basic RAG with pgvector | Planned |
+\\\\| 7 | Basic RAG with pgvector | Planned |
 
-\\| 8 | Hardening, full Docker, documentation, release | Planned |
+\\\\| 8 | Hardening, full Docker, documentation, release | Planned |
 
-**\*\*## Folder structure (end of Module 3)\*\***
+**\*\*\\\*\\\*## Folder structure (end of Module 6)\\\*\\\*\*\***
 
-\\\`\\\`\\\`text
+\\\\\\\`\\\\\\\`\\\\\\\`text
 
 insightflow-ai/
 
@@ -266,7 +266,7 @@ insightflow-ai/
 
     │   │   ├── FileUpload.tsx
 
-    │   │   ├── DatasetPreview\\.tsx
+    │   │   ├── DatasetPreview\\\\.tsx
 
     │   │   ├── DatasetProfile.tsx
 
@@ -296,399 +296,399 @@ insightflow-ai/
 
     └── .env.example
 
-\\\`\\\`\\\`
+\\\\\\\`\\\\\\\`\\\\\\\`
 
-**\*\*## API endpoints\*\***
+**\*\*\\\*\\\*## API endpoints\\\*\\\*\*\***
 
-\\| Method | Path | Notes |
+\\\\| Method | Path | Notes |
 
-\\|---|---|---|
+\\\\|---|---|---|
 
-\\| GET | \\\`/health\\\` | Returns application status, version and environment |
+\\\\| GET | \\\\\\\`/health\\\\\\\` | Returns application status, version and environment |
 
-\\| POST | \\\`/datasets/upload\\\` | Upload a CSV or XLSX file |
+\\\\| POST | \\\\\\\`/datasets/upload\\\\\\\` | Upload a CSV or XLSX file |
 
-\\| GET | \\\`/datasets/{dataset_id}/preview?rows=N\\\` | Returns preview rows; default 5, maximum 20 |
+\\\\| GET | \\\\\\\`/datasets/{dataset_id}/preview?rows=N\\\\\\\` | Returns preview rows; default 5, maximum 20 |
 
-\\| GET | \\\`/datasets/{dataset_id}/profile\\\` | Returns dataset types, missing values, duplicates and statistics |
+\\\\| GET | \\\\\\\`/datasets/{dataset_id}/profile\\\\\\\` | Returns dataset types, missing values, duplicates and statistics |
 
-\\| POST | \\\`/analysis/query\\\` | Ask a question about a dataset (Module 4) |
+\\\\| POST | \\\\\\\`/analysis/query\\\\\\\` | Ask a question about a dataset (Module 4) |
 
-**\*\*### Profile response\*\***
+**\*\*\\\*\\\*### Profile response\\\*\\\*\*\***
 
 The profile endpoint returns:
 
-\\- Row and column counts
+\\\\- Row and column counts
 
-\\- Duplicate row count
+\\\\- Duplicate row count
 
-\\- Total missing cells
+\\\\- Total missing cells
 
-\\- Per-column data type
+\\\\- Per-column data type
 
-\\- Missing count and percentage
+\\\\- Missing count and percentage
 
-\\- Unique count
+\\\\- Unique count
 
-\\- Numeric statistics
+\\\\- Numeric statistics
 
-\\- Datetime range
+\\\\- Datetime range
 
-\\- Limited top values
+\\\\- Limited top values
 
-\\- Column role mapping
+\\\\- Column role mapping
 
-\\- Warnings
+\\\\- Warnings
 
-**\*\*### Error codes\*\***
+**\*\*\\\*\\\*### Error codes\\\*\\\*\*\***
 
 Existing errors include:
 
-\\\`UNSUPPORTED_FILE_TYPE\\\`, \\\`FILE_TOO_LARGE\\\`, \\\`EMPTY_FILE\\\`,
+\\\\\\\`UNSUPPORTED_FILE_TYPE\\\\\\\`, \\\\\\\`FILE_TOO_LARGE\\\\\\\`, \\\\\\\`EMPTY_FILE\\\\\\\`,
 
-\\\`INVALID_ENCODING\\\`, \\\`CORRUPTED_FILE\\\`, \\\`MISSING_HEADERS\\\`,
+\\\\\\\`INVALID_ENCODING\\\\\\\`, \\\\\\\`CORRUPTED_FILE\\\\\\\`, \\\\\\\`MISSING_HEADERS\\\\\\\`,
 
-\\\`DUPLICATE_COLUMNS\\\`, \\\`NO_DATA_ROWS\\\`, \\\`TOO_MANY_ROWS\\\`,
+\\\\\\\`DUPLICATE_COLUMNS\\\\\\\`, \\\\\\\`NO_DATA_ROWS\\\\\\\`, \\\\\\\`TOO_MANY_ROWS\\\\\\\`,
 
-\\\`TOO_MANY_COLUMNS\\\`, \\\`MALFORMED_ROWS\\\`, \\\`INVALID_DATASET_ID\\\`,
+\\\\\\\`TOO_MANY_COLUMNS\\\\\\\`, \\\\\\\`MALFORMED_ROWS\\\\\\\`, \\\\\\\`INVALID_DATASET_ID\\\\\\\`,
 
-\\\`DATASET_NOT_FOUND\\\`, \\\`INVALID_PREVIEW_ROWS\\\`, \\\`VALIDATION_ERROR\\\`,
+\\\\\\\`DATASET_NOT_FOUND\\\\\\\`, \\\\\\\`INVALID_PREVIEW_ROWS\\\\\\\`, \\\\\\\`VALIDATION_ERROR\\\\\\\`,
 
-\\\`NOT_FOUND\\\`, \\\`METHOD_NOT_ALLOWED\\\`, \\\`HTTP_ERROR\\\`, \\\`INTERNAL_ERROR\\\`.
+\\\\\\\`NOT_FOUND\\\\\\\`, \\\\\\\`METHOD_NOT_ALLOWED\\\\\\\`, \\\\\\\`HTTP_ERROR\\\\\\\`, \\\\\\\`INTERNAL_ERROR\\\\\\\`.
 
 Module 4 errors include:
 
-\\- \\\`EMPTY_QUESTION\\\`
+\\\\- \\\\\\\`EMPTY_QUESTION\\\\\\\`
 
-\\- \\\`QUESTION_TOO_LONG\\\`
+\\\\- \\\\\\\`QUESTION_TOO_LONG\\\\\\\`
 
-\\- \\\`UNSUPPORTED_QUESTION\\\`
+\\\\- \\\\\\\`UNSUPPORTED_QUESTION\\\\\\\`
 
-\\- \\\`GEMINI_NOT_CONFIGURED\\\`
+\\\\- \\\\\\\`GEMINI_NOT_CONFIGURED\\\\\\\`
 
-\\- \\\`GEMINI_REQUEST_FAILED\\\`
+\\\\- \\\\\\\`GEMINI_REQUEST_FAILED\\\\\\\`
 
-\\- \\\`INVALID_QUERY_PLAN\\\`
+\\\\- \\\\\\\`INVALID_QUERY_PLAN\\\\\\\`
 
-\\- \\\`UNSUPPORTED_TOOL\\\`
+\\\\- \\\\\\\`UNSUPPORTED_TOOL\\\\\\\`
 
-\\- \\\`RESULT_VALIDATION_FAILED\\\`
+\\\\- \\\\\\\`RESULT_VALIDATION_FAILED\\\\\\\`
 
 Module 3 errors include:
 
-\\- \\\`DATASET_UNREADABLE\\\` — HTTP 500
+\\\\- \\\\\\\`DATASET_UNREADABLE\\\\\\\` — HTTP 500
 
-\\- \\\`MISSING_COLUMN\\\` — HTTP 422 through \\\`ToolError\\\`
+\\\\- \\\\\\\`MISSING_COLUMN\\\\\\\` — HTTP 422 through \\\\\\\`ToolError\\\\\\\`
 
-\\- \\\`AMBIGUOUS_COLUMN\\\` — HTTP 422 through \\\`ToolError\\\`
+\\\\- \\\\\\\`AMBIGUOUS_COLUMN\\\\\\\` — HTTP 422 through \\\\\\\`ToolError\\\\\\\`
 
-\\- \\\`INSUFFICIENT_DATA\\\` — HTTP 422 through \\\`ToolError\\\`
+\\\\- \\\\\\\`INSUFFICIENT_DATA\\\\\\\` — HTTP 422 through \\\\\\\`ToolError\\\\\\\`
 
-\\- \\\`INVALID_NUMERIC_VALUES\\\` — HTTP 422 through \\\`ToolError\\\`
+\\\\- \\\\\\\`INVALID_NUMERIC_VALUES\\\\\\\` — HTTP 422 through \\\\\\\`ToolError\\\\\\\`
 
-\\- \\\`INVALID_PARAMETER\\\` — HTTP 422 through \\\`ToolError\\\`
+\\\\- \\\\\\\`INVALID_PARAMETER\\\\\\\` — HTTP 422 through \\\\\\\`ToolError\\\\\\\`
 
-**\*\*## Environment variables\*\***
+**\*\*\\\*\\\*## Environment variables\\\*\\\*\*\***
 
-**\*\*### Backend\*\***
+**\*\*\\\*\\\*### Backend\\\*\\\*\*\***
 
-The following variables are available in \\\`backend/.env\\\`:
+The following variables are available in \\\\\\\`backend/.env\\\\\\\`:
 
-\\- \\\`ENVIRONMENT\\\`
+\\\\- \\\\\\\`ENVIRONMENT\\\\\\\`
 
-\\- \\\`LOG_LEVEL\\\`
+\\\\- \\\\\\\`LOG_LEVEL\\\\\\\`
 
-\\- \\\`CORS_ORIGINS\\\`
+\\\\- \\\\\\\`CORS_ORIGINS\\\\\\\`
 
-\\- \\\`UPLOAD_DIR\\\`
+\\\\- \\\\\\\`UPLOAD_DIR\\\\\\\`
 
-\\- \\\`MAX_UPLOAD_SIZE_MB\\\` — default 10
+\\\\- \\\\\\\`MAX_UPLOAD_SIZE_MB\\\\\\\` — default 10
 
-\\- \\\`MAX_XLSX_UNCOMPRESSED_MB\\\` — default 100
+\\\\- \\\\\\\`MAX_XLSX_UNCOMPRESSED_MB\\\\\\\` — default 100
 
-\\- \\\`MAX_ROWS\\\` — default 100000
+\\\\- \\\\\\\`MAX_ROWS\\\\\\\` — default 100000
 
-\\- \\\`MAX_COLUMNS\\\` — default 100
+\\\\- \\\\\\\`MAX_COLUMNS\\\\\\\` — default 100
 
-\\- \\\`PREVIEW_DEFAULT_ROWS\\\` — default 5
+\\\\- \\\\\\\`PREVIEW_DEFAULT_ROWS\\\\\\\` — default 5
 
-\\- \\\`PREVIEW_MAX_ROWS\\\` — default 20
+\\\\- \\\\\\\`PREVIEW_MAX_ROWS\\\\\\\` — default 20
 
-\\- \\\`PREVIEW_MAX_CELL_LENGTH\\\` — default 100
+\\\\- \\\\\\\`PREVIEW_MAX_CELL_LENGTH\\\\\\\` — default 100
 
-\\- \\\`PROFILE_TOP_VALUES\\\` — default 10
+\\\\- \\\\\\\`PROFILE_TOP_VALUES\\\\\\\` — default 10
 
-\\- \\\`PROFILE_VALUE_MAX_LENGTH\\\` — default 50
+\\\\- \\\\\\\`PROFILE_VALUE_MAX_LENGTH\\\\\\\` — default 50
 
 Module 4 variables:
 
-\\- \\\`GEMINI_API_KEY\\\` — backend only; secret, never commit
+\\\\- \\\\\\\`GEMINI_API_KEY\\\\\\\` — backend only; secret, never commit
 
-\\- \\\`GEMINI_MODEL\\\` — default \\\`gemini-3.5-flash-lite\\\`
+\\\\- \\\\\\\`GEMINI_MODEL\\\\\\\` — default \\\\\\\`gemini-3.5-flash-lite\\\\\\\`
 
-\\- \\\`GEMINI_TIMEOUT_SECONDS\\\` — default 15
+\\\\- \\\\\\\`GEMINI_TIMEOUT_SECONDS\\\\\\\` — default 15
 
-\\- \\\`GEMINI_MIN_CONFIDENCE\\\` — default 0.5
+\\\\- \\\\\\\`GEMINI_MIN_CONFIDENCE\\\\\\\` — default 0.5
 
-\\- \\\`MAX_QUESTION_LENGTH\\\` — default 500
+\\\\- \\\\\\\`MAX_QUESTION_LENGTH\\\\\\\` — default 500
 
-\\- \\\`CURRENCY_SYMBOL\\\` — default ₹
+\\\\- \\\\\\\`CURRENCY_SYMBOL\\\\\\\` — default ₹
 
-**\*\*### Frontend\*\***
+**\*\*\\\*\\\*### Frontend\\\*\\\*\*\***
 
-\\- \\\`VITE_API_URL\\\`
+\\\\- \\\\\\\`VITE_API_URL\\\\\\\`
 
-**\*\*## Data storage (until Module 6)\*\***
+**\*\*\\\*\\\*## Data storage (until Module 6)\\\*\\\*\*\***
 
-\\\`\\\`\\\`text
+\\\\\\\`\\\\\\\`\\\\\\\`text
 
 data/uploads/{dataset_id}.csv
 
 data/uploads/{dataset_id}.meta.json
 
-\\\`\\\`\\\`
+\\\\\\\`\\\\\\\`\\\\\\\`
 
-\\- Uploaded data is stored as clean UTF-8 CSV.
+\\\\- Uploaded data is stored as clean UTF-8 CSV.
 
-\\- Values are stored as text.
+\\\\- Values are stored as text.
 
-\\- The dataset path is derived from the UUID.
+\\\\- The dataset path is derived from the UUID.
 
-\\- The path is never returned to the frontend.
+\\\\- The path is never returned to the frontend.
 
-\\- Access is handled through \\\`DatasetRepository\\\`.
+\\\\- Access is handled through \\\\\\\`DatasetRepository\\\\\\\`.
 
-\\- Module 3 reads the stored CSV using Pandas.
+\\\\- Module 3 reads the stored CSV using Pandas.
 
-\\- PostgreSQL integration is planned for Module 6.
+\\\\- PostgreSQL integration was completed in Module 6.
 
-**\*\*## Dependencies\*\***
+**\*\*\\\*\\\*## Dependencies\\\*\\\*\*\***
 
-**\*\*### Backend\*\***
+**\*\*\\\*\\\*### Backend\\\*\\\*\*\***
 
-\\- fastapi
+\\\\- fastapi
 
-\\- uvicorn[standard]
+\\\\- uvicorn[standard]
 
-\\- pydantic-settings
+\\\\- pydantic-settings
 
-\\- pytest
+\\\\- pytest
 
-\\- httpx
+\\\\- httpx
 
-\\- python-multipart
+\\\\- python-multipart
 
-\\- openpyxl
+\\\\- openpyxl
 
-\\- pandas
+\\\\- pandas
 
-\\- numpy
+\\\\- numpy
 
-\\- python-dateutil
+\\\\- python-dateutil
 
-\\- six
+\\\\- six
 
-\\- tzdata
+\\\\- tzdata
 
-Exact versions are maintained in \\\`backend/requirements.txt\\\`.
+Exact versions are maintained in \\\\\\\`backend/requirements.txt\\\\\\\`.
 
-**\*\*### Frontend\*\***
+**\*\*\\\*\\\*### Frontend\\\*\\\*\*\***
 
-\\- react
+\\\\- react
 
-\\- react-dom
+\\\\- react-dom
 
-\\- vite
+\\\\- vite
 
-\\- typescript
+\\\\- typescript
 
 No additional frontend packages were required for Module 4.
 
-**\*\*## Analysis Tools (Module 3)\*\***
+**\*\*\\\*\\\*## Analysis Tools (Module 3)\\\*\\\*\*\***
 
 Python and Pandas calculate every number. There is no LLM in these tools.
 
-\\| Tool | File | What it does |
+\\\\| Tool | File | What it does |
 
-\\|---|---|---|
+\\\\|---|---|---|
 
-\\| Profiling | \\\`backend/app/tools/profiling_tool.py\\\` | Types, missing values, statistics and limited value lists |
+\\\\| Profiling | \\\\\\\`backend/app/tools/profiling_tool.py\\\\\\\` | Types, missing values, statistics and limited value lists |
 
-\\| Missing values | \\\`backend/app/tools/missing_value_tool.py\\\` | Missing counts and percentages, duplicate rows |
+\\\\| Missing values | \\\\\\\`backend/app/tools/missing_value_tool.py\\\\\\\` | Missing counts and percentages, duplicate rows |
 
-\\| Aggregation | \\\`backend/app/tools/aggregation_tool.py\\\` | Sum, average, count, total revenue and average order value |
+\\\\| Aggregation | \\\\\\\`backend/app/tools/aggregation_tool.py\\\\\\\` | Sum, average, count, total revenue and average order value |
 
-\\| Grouping | \\\`backend/app/tools/grouping_tool.py\\\` | Sum, average or count per group |
+\\\\| Grouping | \\\\\\\`backend/app/tools/grouping_tool.py\\\\\\\` | Sum, average or count per group |
 
-\\| Ranking | \\\`backend/app/tools/ranking_tool.py\\\` | Top N and bottom N with stable tie handling |
+\\\\| Ranking | \\\\\\\`backend/app/tools/ranking_tool.py\\\\\\\` | Top N and bottom N with stable tie handling |
 
-\\| Column mapper | \\\`backend/app/utils/column_mapper.py\\\` | Maps columns to revenue, quantity, unit price, product, order ID and region |
+\\\\| Column mapper | \\\\\\\`backend/app/utils/column_mapper.py\\\\\\\` | Maps columns to revenue, quantity, unit price, product, order ID and region |
 
-**\*\*### Column roles\*\***
+**\*\*\\\*\\\*### Column roles\\\*\\\*\*\***
 
 Column names are matched only from a fixed alias table.
 
-\\- Capitalization, spaces, hyphens and underscores are ignored.
+\\\\- Capitalization, spaces, hyphens and underscores are ignored.
 
-\\- Matching columns are mapped to predefined roles.
+\\\\- Matching columns are mapped to predefined roles.
 
-\\- If two columns match the same role, \\\`AMBIGUOUS_COLUMN\\\` is raised.
+\\\\- If two columns match the same role, \\\\\\\`AMBIGUOUS_COLUMN\\\\\\\` is raised.
 
-\\- \\\`column_overrides\\\` is the explicit way to choose a column.
+\\\\- \\\\\\\`column_overrides\\\\\\\` is the explicit way to choose a column.
 
-\\- Module 4 must not independently guess column roles.
+\\\\- Module 4 must not independently guess column roles.
 
-**\*\*### Revenue calculation\*\***
+**\*\*\\\*\\\*### Revenue calculation\\\*\\\*\*\***
 
 Revenue is calculated using the following priority:
 
-1\\. Direct revenue column.
+1\\\\. Direct revenue column.
 
-2\\. \\\`quantity × unit_price\\\`.
+2\\\\. \\\\\\\`quantity × unit_price\\\\\\\`.
 
-3\\. \\\`INSUFFICIENT_DATA\\\` if neither option is available.
+3\\\\. \\\\\\\`INSUFFICIENT_DATA\\\\\\\` if neither option is available.
 
 The calculation method is always returned.
 
-\\- Negative values are preserved.
+\\\\- Negative values are preserved.
 
-\\- Empty cells are excluded and counted.
+\\\\- Empty cells are excluded and counted.
 
-\\- Invalid values stop the calculation.
+\\\\- Invalid values stop the calculation.
 
-\\- Values such as \\\`abc\\\`, \\\`1,200\\\`, \\\`$50\\\`, \\\`inf\\\` and \\\`nan\\\` are not silently corrected or skipped.
+\\\\- Values such as \\\\\\\`abc\\\\\\\`, \\\\\\\`1,200\\\\\\\`, \\\\\\\`$50\\\\\\\`, \\\\\\\`inf\\\\\\\` and \\\\\\\`nan\\\\\\\` are not silently corrected or skipped.
 
-**\*\*### Average order value\*\***
+**\*\*\\\*\\\*### Average order value\\\*\\\*\*\***
 
 Average order value is:
 
-\\\`\\\`\\\`text
+\\\\\\\`\\\\\\\`\\\\\\\`text
 
 Total revenue / DISTINCT order IDs
 
-\\\`\\\`\\\`
+\\\\\\\`\\\\\\\`\\\\\\\`
 
-\\- Only rows containing both revenue and order ID are used.
+\\\\- Only rows containing both revenue and order ID are used.
 
-\\- Without an order ID column, the calculation returns \\\`INSUFFICIENT_DATA\\\`.
+\\\\- Without an order ID column, the calculation returns \\\\\\\`INSUFFICIENT_DATA\\\\\\\`.
 
-\\- A row-count fallback is available only when explicitly enabled with:
+\\\\- A row-count fallback is available only when explicitly enabled with:
 
-  \\\`allow_row_count_fallback=True\\\`.
+  \\\\\\\`allow_row_count_fallback=True\\\\\\\`.
 
-\\- Zero orders return \\\`INSUFFICIENT_DATA\\\`.
+\\\\- Zero orders return \\\\\\\`INSUFFICIENT_DATA\\\\\\\`.
 
-**\*\*### Profile rules\*\***
+**\*\*\\\*\\\*### Profile rules\\\*\\\*\*\***
 
-\\- Profiling is computed on demand from the stored CSV.
+\\\\- Profiling is computed on demand from the stored CSV.
 
-\\- Supported detected types include integer, float, boolean, datetime, text and empty.
+\\\\- Supported detected types include integer, float, boolean, datetime, text and empty.
 
-\\- Leading-zero numbers are treated as text.
+\\\\- Leading-zero numbers are treated as text.
 
-\\- Only ISO dates are recognised.
+\\\\- Only ISO dates are recognised.
 
-\\- At most 10 top values are returned per column.
+\\\\- At most 10 top values are returned per column.
 
-\\- Each top value is limited to 50 characters.
+\\\\- Each top value is limited to 50 characters.
 
-\\- NaN and infinity are converted to \\\`null\\\` for JSON safety.
+\\\\- NaN and infinity are converted to \\\\\\\`null\\\\\\\` for JSON safety.
 
-\\- Numeric values are rounded to 6 decimal places.
+\\\\- Numeric values are rounded to 6 decimal places.
 
-\\- Percentages are rounded to 2 decimal places.
+\\\\- Percentages are rounded to 2 decimal places.
 
-\\- Profile top values and preview rows must never be sent to an LLM.
+\\\\- Profile top values and preview rows must never be sent to an LLM.
 
-**\*\*## Key decisions\*\***
+**\*\*\\\*\\\*## Key decisions\\\*\\\*\*\***
 
-See \\\`docs/DECISIONS.md\\\` for decisions D-001 through D-039.
+See \\\\\\\`docs/DECISIONS.md\\\\\\\` for decisions D-001 through D-039.
 
 Important decisions include:
 
-\\- D-019: Frontend uses TypeScript.
+\\\\- D-019: Frontend uses TypeScript.
 
-\\- D-020: Support CSV and first-sheet XLSX uploads.
+\\\\- D-020: Support CSV and first-sheet XLSX uploads.
 
-\\- D-021: Preview data is capped and must not be sent to an LLM.
+\\\\- D-021: Preview data is capped and must not be sent to an LLM.
 
-\\- D-022: Pandas is introduced in Module 3.
+\\\\- D-022: Pandas is introduced in Module 3.
 
-\\- D-023: Consistent error response format.
+\\\\- D-023: Consistent error response format.
 
-\\- D-024: Dataset storage layout.
+\\\\- D-024: Dataset storage layout.
 
-\\- D-028: Docker deferred to Module 6.
+\\\\- D-028: Docker deferred to Module 6.
 
-\\- D-029: Analysis tools are plain functions returning Pydantic result models.
+\\\\- D-029: Analysis tools are plain functions returning Pydantic result models.
 
-\\- D-030: Only empty cells are missing; invalid numeric text is not silently skipped.
+\\\\- D-030: Only empty cells are missing; invalid numeric text is not silently skipped.
 
-\\- D-031: Column roles use the fixed alias mapper.
+\\\\- D-031: Column roles use the fixed alias mapper.
 
-\\- D-032: Revenue uses direct revenue or quantity multiplied by unit price.
+\\\\- D-032: Revenue uses direct revenue or quantity multiplied by unit price.
 
-\\- D-033: Average order value uses distinct order IDs.
+\\\\- D-033: Average order value uses distinct order IDs.
 
-\\- D-034: Tools raise \\\`ToolError\\\`.
+\\\\- D-034: Tools raise \\\\\\\`ToolError\\\\\\\`.
 
-\\- D-035: Profile is computed on demand and limited.
+\\\\- D-035: Profile is computed on demand and limited.
 
-\\- D-036: Ranking uses competition ranks and stable tie handling.
+\\\\- D-036: Ranking uses competition ranks and stable tie handling.
 
-\\- D-037: Numbers and percentages use fixed rounding rules.
+\\\\- D-037: Numbers and percentages use fixed rounding rules.
 
-\\- D-038: Fixed evaluation files are committed to Git.
+\\\\- D-038: Fixed evaluation files are committed to Git.
 
-\\- D-039: Docker remains planned for Module 6.
+\\\\- D-039: Docker remains planned for Module 6.
 
-**\*\*## Testing status\*\***
+**\*\*\\\*\\\*## Testing status\\\*\\\*\*\***
 
-**\*\*### Backend\*\***
+**\*\*\\\*\\\*### Backend\\\*\\\*\*\***
 
-\\- Total tests: **\*\*\\\*\\\*559\\\*\\\*\*\***
+\\\\- Total tests: **\*\*\\\*\\\*\\\\\\\*\\\\\\\*559\\\\\\\*\\\\\\\*\\\*\\\*\*\***
 
-\\- Result: **\*\*\\\*\\\*559 passed\\\*\\\*\*\***
+\\\\- Result: **\*\*\\\*\\\*\\\\\\\*\\\\\\\*559 passed\\\\\\\*\\\\\\\*\\\*\\\*\*\***
 
 Run all backend tests:
 
-\\\`\\\`\\\`powershell
+\\\\\\\`\\\\\\\`\\\\\\\`powershell
 
 cd C:\dev\insightflow-ai\backend
 
-.\\\\.venv\Scripts\Activate.ps1
+.\\\\\\\\.venv\Scripts\Activate.ps1
 
 pytest -q
 
-\\\`\\\`\\\`
+\\\\\\\`\\\\\\\`\\\\\\\`
 
-**\*\*### Module 3 test files\*\***
+**\*\*\\\*\\\*### Module 3 test files\\\*\\\*\*\***
 
-\\- \\\`test_column_mapper.py\\\` — 48 tests
+\\\\- \\\\\\\`test_column_mapper.py\\\\\\\` — 48 tests
 
-\\- \\\`test_dataframe_utils.py\\\` — 18 tests
+\\\\- \\\\\\\`test_dataframe_utils.py\\\\\\\` — 18 tests
 
-\\- \\\`test_missing_value_tool.py\\\` — 13 tests
+\\\\- \\\\\\\`test_missing_value_tool.py\\\\\\\` — 13 tests
 
-\\- \\\`test_profiling_tool.py\\\` — 39 tests
+\\\\- \\\\\\\`test_profiling_tool.py\\\\\\\` — 39 tests
 
-\\- \\\`test_revenue.py\\\` — 26 tests
+\\\\- \\\\\\\`test_revenue.py\\\\\\\` — 26 tests
 
-\\- \\\`test_aggregation_tool.py\\\` — 37 tests
+\\\\- \\\\\\\`test_aggregation_tool.py\\\\\\\` — 37 tests
 
-\\- \\\`test_grouping_tool.py\\\` — 20 tests
+\\\\- \\\\\\\`test_grouping_tool.py\\\\\\\` — 20 tests
 
-\\- \\\`test_ranking_tool.py\\\` — 22 tests
+\\\\- \\\\\\\`test_ranking_tool.py\\\\\\\` — 22 tests
 
-\\- \\\`test_profile_api.py\\\` — 15 tests
+\\\\- \\\\\\\`test_profile_api.py\\\\\\\` — 15 tests
 
-\\- \\\`test_evaluation.py\\\` — 27 tests
+\\\\- \\\\\\\`test_evaluation.py\\\\\\\` — 27 tests
 
-**\*\*### Frontend\*\***
+**\*\*\\\*\\\*### Frontend\\\*\\\*\*\***
 
 The following commands passed:
 
-\\\`\\\`\\\`powershell
+\\\\\\\`\\\\\\\`\\\\\\\`powershell
 
 cd C:\dev\insightflow-ai\frontend
 
@@ -696,185 +696,244 @@ npm run build
 
 npm run lint
 
-\\\`\\\`\\\`
+\\\\\\\`\\\\\\\`\\\\\\\`
 
 Manual browser testing confirmed:
 
-\\- Backend health status
+\\\\- Backend health status
 
-\\- CSV upload
+\\\\- CSV upload
 
-\\- XLSX upload
+\\\\- XLSX upload
 
-\\- Data preview
+\\\\- Data preview
 
-\\- Dynamic row selector
+\\\\- Dynamic row selector
 
-\\- Dataset profile
+\\\\- Dataset profile
 
-\\- Numeric and text classification
+\\\\- Numeric and text classification
 
-\\- Missing values
+\\\\- Missing values
 
-\\- Duplicate rows
+\\\\- Duplicate rows
 
-\\- Column mapping
+\\\\- Column mapping
 
-\\- Error handling when backend is unavailable
+\\\\- Error handling when backend is unavailable
 
-\\- Retry functionality
+\\\\- Retry functionality
 
-\\- Empty-file handling
+\\\\- Empty-file handling
 
-\\- Clearing old preview after failed upload
+\\\\- Clearing old preview after failed upload
 
-**\*\*## Known limitations\*\***
+**\*\*\\\*\\\*## Known limitations\\\*\\\*\*\***
 
-\\- The framework receives the whole upload before the size check runs.
+\\\\- The framework receives the whole upload before the size check runs.
 
-\\- No authentication.
+\\\\- No authentication.
 
-\\- No delete endpoint.
+\\\\- No delete endpoint.
 
-\\- No cleanup of old uploads.
+\\\\- No cleanup of old uploads.
 
-\\- XLSX formulas use the last saved value only.
+\\\\- XLSX formulas use the last saved value only.
 
-\\- XLSX support is limited to the first sheet.
+\\\\- XLSX support is limited to the first sheet.
 
-\\- CSV files must be comma-separated.
+\\\\- CSV files must be comma-separated.
 
-\\- Only empty cells are treated as missing.
+\\\\- Only empty cells are treated as missing.
 
-\\- \\\`N/A\\\` and \\\`null\\\` remain text values.
+\\\\- \\\\\\\`N/A\\\\\\\` and \\\\\\\`null\\\\\\\` remain text values.
 
-\\- Currency symbols and thousand separators are not cleaned.
+\\\\- Currency symbols and thousand separators are not cleaned.
 
-\\- Invalid numeric text stops calculations with a clear error.
+\\\\- Invalid numeric text stops calculations with a clear error.
 
-\\- Day/month dates such as \\\`05/01/2025\\\` are not guessed and remain text.
+\\\\- Day/month dates such as \\\\\\\`05/01/2025\\\\\\\` are not guessed and remain text.
 
-\\- The profile is recomputed on every request and has no caching.
+\\\\- The profile is recomputed on every request and has no caching.
 
-\\- Profiling may take approximately one second for 100,000 rows.
+\\\\- Profiling may take approximately one second for 100,000 rows.
 
-\\- The profile returns the 10 most common raw values per text column to the browser.
+\\\\- The profile returns the 10 most common raw values per text column to the browser.
 
-\\- Profile top values must never be sent to an LLM.
+\\\\- Profile top values must never be sent to an LLM.
 
-\\- Groups are case-sensitive; \\\`laptop\\\` and \\\`Laptop\\\` are separate groups.
+\\\\- Groups are case-sensitive; \\\\\\\`laptop\\\\\\\` and \\\\\\\`Laptop\\\\\\\` are separate groups.
 
-\\- Direct revenue is not checked against \\\`quantity × unit_price\\\`.
+\\\\- Direct revenue is not checked against \\\\\\\`quantity × unit_price\\\\\\\`.
 
-\\- Duplicate rows are exact copies of all columns and are not removed from calculations.
+\\\\- Duplicate rows are exact copies of all columns and are not removed from calculations.
 
-\\- Tools do not yet have dedicated HTTP endpoints.
+\\\\- Tools do not yet have dedicated HTTP endpoints.
 
-\\- Module 4 and Module 5 will wrap the tools into the LangGraph workflow.
+\\\\- Module 4 and Module 5 will wrap the tools into the LangGraph workflow.
 
-\\- Tested with Pandas 3.0.6.
+\\\\- Tested with Pandas 3.0.6.
 
-\\- Docker files are planned for Module 6.
+\\\\- Docker files were added in Module 6.
 
-\\- PostgreSQL and pgvector are planned for later modules.
+\\\\- Basic RAG with pgvector is planned for Module 7.
 
-\\- No production deployment configuration exists yet.
+\\\\- No production deployment configuration exists yet.
 
-\*\*## Next module
+\\\*\\\*## Next module
 
-**### Module 5 — LangGraph workflow**
+**\*\*### Module 5 — LangGraph workflow\*\***
 
 Planned responsibilities:
 
-\- Build the LangGraph supervisor workflow.
+\\- Build the LangGraph supervisor workflow.
 
-\- Connect the question-understanding service to workflow state.
+\\- Connect the question-understanding service to workflow state.
 
-\- Route validated query plans to analysis tools.
+\\- Route validated query plans to analysis tools.
 
-\- Preserve structured outcomes and validation results.
+\\- Preserve structured outcomes and validation results.
 
-\- Keep numerical calculations inside Python analysis tools.
+\\- Keep numerical calculations inside Python analysis tools.
 
-**## Module 4 additions**
+**\*\*## Module 4 additions\*\***
 
-**### Query understanding**
+**\*\*### Query understanding\*\***
 
-\- \`QueryPlan\` provides structured intent, tool, metric, aggregation, grouping, sorting, limit, confidence and reasoning fields.
+\\- \\\`QueryPlan\\\` provides structured intent, tool, metric, aggregation, grouping, sorting, limit, confidence and reasoning fields.
 
-\- Gemini is used only for classification; the rule-based classifier is the fallback.
+\\- Gemini is used only for classification; the rule-based classifier is the fallback.
 
-\- Gemini receives the question and limited column names only, never row values.
+\\- Gemini receives the question and limited column names only, never row values.
 
-\- Confidence below \`GEMINI_MIN_CONFIDENCE\` is ignored.
+\\- Confidence below \\\`GEMINI_MIN_CONFIDENCE\\\` is ignored.
 
-\- The dispatcher uses a fixed dictionary of five safe handlers.
+\\- The dispatcher uses a fixed dictionary of five safe handlers.
 
-**### Query API**
+**\*\*### Query API\*\***
 
-\`POST /analysis/query\` accepts:
+\\\`POST /analysis/query\\\` accepts:
 
-\`\`\`json
+\\\`\\\`\\\`json
 
 {
 
-  "dataset_id": "\<uuid>",
+  "dataset_id": "\\\<uuid>",
 
   "question": "What is the total revenue?"
 
 }
 
-\`\`\`
+\\\`\\\`\\\`
 
-The response uses a structured \`QueryResponse\` envelope with these statuses:
+The response uses a structured \\\`QueryResponse\\\` envelope with these statuses:
 
-\- \`success\`
+\\- \\\`success\\\`
 
-\- \`unsupported\`
+\\- \\\`unsupported\\\`
 
-\- \`insufficient_data\`
+\\- \\\`insufficient_data\\\`
 
-\- \`error\`
+\\- \\\`error\\\`
 
-HTTP errors include \`404 DATASET_NOT_FOUND\`, \`422 INVALID_DATASET_ID\`, \`EMPTY_QUESTION\`, \`QUESTION_TOO_LONG\`, and \`VALIDATION_ERROR\`.
+HTTP errors include \\\`404 DATASET_NOT_FOUND\\\`, \\\`422 INVALID_DATASET_ID\\\`, \\\`EMPTY_QUESTION\\\`, \\\`QUESTION_TOO_LONG\\\`, and \\\`VALIDATION_ERROR\\\`.
 
-**### Known limitations introduced in Module 4**
+**\*\*### Known limitations introduced in Module 4\*\***
 
-\- The rule fallback is English-only.
+\\- The rule fallback is English-only.
 
-\- It cannot detect every filter phrase, so the answer states “No filters were applied”.
+\\- It cannot detect every filter phrase, so the answer states “No filters were applied”.
 
-\- There is no conversation memory; each question stands alone.
+\\- There is no conversation memory; each question stands alone.
 
-\- Gemini’s choice can differ from the rules.
+\\- Gemini’s choice can differ from the rules.
 
-\- \`generate_content\` is labelled “Legacy” in Google’s docs.
+\\- \\\`generate_content\\\` is labelled “Legacy” in Google’s docs.
 
-\- Money is shown with plain thousands separators, not Indian lakh grouping.
+\\- Money is shown with plain thousands separators, not Indian lakh grouping.
 
-\- There is no frontend test runner.
+\\- There is no frontend test runner.
 
-\- The dataset CSV is reloaded for every question.
+\\- The dataset CSV is reloaded for every question.
 
-\- Definitions arrive in Module 7.
+\\- Definitions arrive in Module 7.
 
-**Module 5 — LangGraph workflow and result validation**
+**\*\*Module 5 — LangGraph workflow and result validation\*\***
 
 Implementation completed so far:
 
-- Added LangGraph 1.x workflow under `backend/app/workflow/`.
-- Added typed workflow state and nodes for classification, routing, execution, metric definitions, validation, explanation and response.
-- Added dependency injection for retriever, validator and explainer.
-- Added a `MetricRetriever` interface with a stub implementation for future Module 7 RAG.
-- Added independent Pandas-based result reconciliation and machine-readable validation codes.
-- Added number-grounding checks for explanation numbers.
-- Grounding failures return `EXPLANATION_NOT_GROUNDED`, hide the result and explanation, and add `UNGROUNDED_NUMBER`.
-- Updated frontend query types and `QueryResult.tsx`.
-- Backend suite: 633 tests passed.
-- Frontend lint and production build passed.
+\- Added LangGraph 1.x workflow under \`backend/app/workflow/\`.
+
+\- Added typed workflow state and nodes for classification, routing, execution, metric definitions, validation, explanation and response.
+
+\- Added dependency injection for retriever, validator and explainer.
+
+\- Added a \`MetricRetriever\` interface with a stub implementation for future Module 7 RAG.
+
+\- Added independent Pandas-based result reconciliation and machine-readable validation codes.
+
+\- Added number-grounding checks for explanation numbers.
+
+\- Grounding failures return \`EXPLANATION_NOT_GROUNDED\`, hide the result and explanation, and add \`UNGROUNDED_NUMBER\`.
+
+\- Updated frontend query types and \`QueryResult.tsx\`.
+
+\- Backend suite: 633 tests passed.
+
+\- Frontend lint and production build passed.
 
 Remaining release work:
 
-- Complete manual API/browser verification.
-- Complete Docker preparation verification.
-- Review final diff, commit Module 5, push `main`, and create/push the `module-5` tag.
+\- Complete manual API/browser verification.
+
+\- Complete Docker preparation verification.
+
+\- Review final diff, commit Module 5, push \`main\`, and create/push the \`module-5\` tag.
+
+**\*\*\*## Module 6 — PostgreSQL integration and Docker Compose\*\*\***
+
+Module 6 implementation is complete.
+
+### Storage behavior
+
+- CSV files remain on local disk using `{dataset_id}.csv` and `{dataset_id}.csv.tmp`.
+- `STORAGE_BACKEND=json` is the default and preserves the JSON metadata implementation.
+- `STORAGE_BACKEND=postgres` stores dataset metadata in PostgreSQL.
+- Analysis history is stored in the PostgreSQL `analysis_history` table only.
+- Both dataset repositories implement the same `DatasetRepository` protocol.
+- Dataset metadata and analysis history are persisted in PostgreSQL; CSV files remain on disk.
+
+### Database layer
+
+- SQLAlchemy and `psycopg` were added.
+- Tables: `datasets` and `analysis_history`.
+- `analysis_history.response` is stored as JSONB.
+- Schema initialization uses `Base.metadata.create_all()`; Alembic is not yet used.
+- Database sessions provide commit, rollback, and close behavior.
+
+### Docker Compose
+
+- PostgreSQL image: `pgvector/pgvector:0.8.6-pg16`.
+- Internal database address: `db:5432`.
+- Windows host PostgreSQL address: `localhost:5433`.
+- Docker backend address: `localhost:8001`.
+- Docker Compose sets `STORAGE_BACKEND=postgres`.
+- PostgreSQL data is stored in the named `pgdata` volume.
+- Do not use `docker compose down -v` unless deleting database data is intentional.
+
+### Testing and verification
+
+- PostgreSQL integration tests: 26 passed.
+- Full backend regression: 659 passed, 1 warning.
+- Frontend lint and production build passed.
+- Docker Compose build and startup passed.
+- Persistence after a container restart was manually verified.
+
+### Module 6 decisions
+
+- D-057: PostgreSQL stores metadata and analysis history; CSV files remain on disk.
+- D-058: Storage backend is selected through `STORAGE_BACKEND`.
+- D-059: `Base.metadata.create_all()` is used instead of Alembic.
+- D-060: Full `QueryResponse` is stored as JSONB.
+- D-061: Analysis history is recorded once in `analysis_routes.py`.
+- D-062: The pinned `pgvector/pgvector:0.8.6-pg16` image is used.

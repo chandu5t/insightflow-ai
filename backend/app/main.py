@@ -47,3 +47,9 @@ logger.info(
     settings.environment,
     settings.cors_origins_list,
 )
+
+if settings.storage_backend == "postgres":
+    from app.db.session import init_db
+
+    init_db(settings)
+    logger.info("PostgreSQL storage backend selected; tables ensured.")

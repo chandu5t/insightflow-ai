@@ -1,5 +1,6 @@
 """Route for asking questions about a dataset. The logic is in query_service.py and app/workflow."""
 
+import logging
 from collections.abc import Callable
 
 from fastapi import APIRouter, Depends
@@ -7,15 +8,22 @@ from pydantic import BaseModel
 
 from app.api.dataset_routes import get_dataset_repository
 from app.core.config import Settings, get_settings
+from app.db.engine import get_session_factory
 from app.schemas.error_schema import ErrorResponse
 from app.schemas.query_schema import QueryPlan, QueryRequest, QueryResponse
 from app.services import query_service
+from app.services.analysis_history_repository import (
+    AnalysisHistoryRepository,
+    NullAnalysisHistoryRepository,
+    PostgresAnalysisHistoryRepository,
+)
 from app.services.dataset_repository import DatasetRepository
 from app.services.explainer import explain
 from app.services.gemini_client import GeminiClient, LlmClient
 from app.services.metric_retriever import MetricRetriever, StubMetricRetriever
 
 router = APIRouter(prefix="/analysis", tags=["Analysis"])
+logger = logging.getLogger(__name__)
 
 
 def get_llm_client(settings: Settings = Depends(get_settings)) -> LlmClient:
@@ -37,6 +45,15 @@ def get_explainer() -> Callable[[QueryPlan, BaseModel, str], str]:
     return explain
 
 
+def get_analysis_history_repository(settings: Settings = Depends(get_settings)) -> AnalysisHistoryRepository:
+    """Where answered questions are recorded (Module 6). A no-op when STORAGE_BACKEND=json,
+    so JSON-mode requests never need PostgreSQL running.
+    """
+    if settings.storage_backend == "postgres":
+        return PostgresAnalysisHistoryRepository(get_session_factory(settings))
+    return NullAnalysisHistoryRepository()
+
+
 @router.post(
     "/query",
     response_model=QueryResponse,
@@ -49,9 +66,19 @@ def query_dataset(
     llm_client: LlmClient = Depends(get_llm_client),
     retriever: MetricRetriever = Depends(get_metric_retriever),
     explainer: Callable[[QueryPlan, BaseModel, str], str] = Depends(get_explainer),
+    history: AnalysisHistoryRepository = Depends(get_analysis_history_repository),
 ) -> QueryResponse:
-    """Ask a question in plain English about an uploaded dataset."""
-    return query_service.answer_question(
+    """Ask a question in plain English about an uploaded dataset.
+
+    A bad dataset id, an empty question, or an unknown dataset raise AppError INSIDE
+    answer_question() below and are returned exactly as before Module 6 -- they never
+    reach a QueryResponse, so nothing is recorded for them (see D-057). Everything that
+    DOES produce a QueryResponse (success, unsupported, insufficient_data, or an internal
+    "error" status such as a failed validation or grounding check) is recorded exactly
+    once, right here, after answer_question() returns -- so there is exactly one call
+    site and no possibility of a duplicate record for one request.
+    """
+    response = query_service.answer_question(
         raw_dataset_id=request.dataset_id,
         question=request.question,
         settings=settings,
@@ -60,3 +87,10 @@ def query_dataset(
         retriever=retriever,
         explainer=explainer,
     )
+    try:
+        history.record(dataset_id=response.dataset_id, question=response.question, response=response)
+    except Exception:
+        # A history-write failure must never turn a successfully answered question into
+        # a failed HTTP response -- the user's actual answer is unaffected either way.
+        logger.exception("Unexpected error while recording analysis history")
+    return response

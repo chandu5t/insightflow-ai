@@ -1,4 +1,5 @@
 """Application settings loaded from environment variables and backend/.env."""
+from typing import Literal
 
 from functools import lru_cache
 from pathlib import Path
@@ -48,6 +49,26 @@ class Settings(BaseSettings):
     max_question_length: int = Field(default=500, gt=0)
     # Shown before money amounts in explanations. The data files carry no currency.
     currency_symbol: str = "₹"
+        # ---- Storage backend (Module 6) ----
+    # "json": today's file-based metadata (the default -- what every existing test uses).
+    # "postgres": dataset metadata and analysis history are stored in PostgreSQL instead.
+    storage_backend: Literal["json", "postgres"] = "json"
+    postgres_host: str = "localhost"
+    postgres_port: int = Field(default=5432, gt=0, le=65535)
+    postgres_user: str = "insightflow"
+    postgres_password: SecretStr = SecretStr("")
+    postgres_db: str = "insightflow"
+
+    @property
+    def database_url(self) -> str:
+        """Built from parts (never one raw env var), so the password stays a SecretStr
+        everywhere except this one property, which SQLAlchemy needs as plain text.
+        """
+        password = self.postgres_password.get_secret_value()
+        return (
+            f"postgresql+psycopg://{self.postgres_user}:{password}"
+            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        )
 
     model_config = SettingsConfigDict(
         env_file=BACKEND_DIR / ".env",

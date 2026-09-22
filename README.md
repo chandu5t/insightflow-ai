@@ -6,7 +6,7 @@ InsightFlow AI lets you upload a business CSV or Excel file and ask questions in
 
 Python and Pandas perform every calculation. The LLM (Google Gemini) only understands the question and explains results that have already been validated.
 
-> **Status:** Module 5 of 8 (LangGraph workflow and result validation).
+> **Status:** Module 6 of 8 (PostgreSQL persistence).
 
 ## Features
 
@@ -59,9 +59,13 @@ See `docs/PROJECT_CONTEXT.md` for the current project structure.
 
 ```powershell
 cd backend
+
 python -m venv .venv
+
 .\.venv\Scripts\Activate.ps1
+
 python -m pip install -r requirements.txt
+
 Copy-Item .env.example .env
 ```
 
@@ -69,7 +73,9 @@ Copy-Item .env.example .env
 
 ```powershell
 cd frontend
+
 npm install
+
 Copy-Item .env.example .env
 ```
 
@@ -91,6 +97,12 @@ Copy-Item .env.example .env
 | `backend/.env` | `GEMINI_MIN_CONFIDENCE` | Minimum accepted Gemini confidence |
 | `backend/.env` | `MAX_QUESTION_LENGTH` | Maximum question length |
 | `backend/.env` | `CURRENCY_SYMBOL` | Currency symbol; default `₹` |
+| `backend/.env` | `STORAGE_BACKEND` | Storage backend: `json` or `postgres` |
+| `backend/.env` | `POSTGRES_USER` | PostgreSQL username |
+| `backend/.env` | `POSTGRES_PASSWORD` | PostgreSQL password |
+| `backend/.env` | `POSTGRES_DB` | PostgreSQL database name |
+| `backend/.env` | `POSTGRES_HOST` | PostgreSQL host |
+| `backend/.env` | `POSTGRES_PORT` | PostgreSQL port |
 | `frontend/.env` | `VITE_API_URL` | Backend URL used by React |
 
 > **Important:** Never commit `.env` files or API keys.
@@ -99,7 +111,9 @@ Copy-Item .env.example .env
 
 ```powershell
 cd backend
+
 .\.venv\Scripts\Activate.ps1
+
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -109,6 +123,7 @@ API documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
 ```powershell
 cd frontend
+
 npm run dev
 ```
 
@@ -118,21 +133,25 @@ Open: [http://localhost:5173](http://localhost:5173)
 
 ```powershell
 cd backend
+
 .\.venv\Scripts\Activate.ps1
+
 pytest -v
 ```
 
 Current test status:
 
-- **633 tests passed**
+- **659 tests passed**
 - Backend unit tests and API tests
-- Profiling, analysis, classification, dispatching, validation, reconciliation, number-grounding, explanation, and evaluation tests
+- Profiling, analysis, classification, dispatching, validation, reconciliation, number-grounding, explanation, evaluation, and PostgreSQL integration tests
 
 Frontend verification:
 
 ```powershell
 cd frontend
+
 npm run lint
+
 npm run build
 ```
 
@@ -141,6 +160,7 @@ Both frontend commands pass.
 ## Workflow and Validation (Module 5)
 
 Each question runs through a LangGraph workflow: classify -> route -> execute -> validate -> explain -> respond.
+
 Failures skip the steps that make no sense (for example, no explanation is written for a result that failed validation).
 
 - **Validation:** finite numbers, row accounting, an independent recomputation of the result, the row count against the upload, and (for groups) totals that add up. Each failed check has a machine-readable code.
@@ -148,9 +168,35 @@ Failures skip the steps that make no sense (for example, no explanation is writt
 - **Definitions:** "What is revenue?" is routed to a metric-definition branch. It is a stub until Module 7 and never pretends to have found a definition.
 - The `POST /analysis/query` response format is unchanged.
 
-## Docker
+## PostgreSQL and Docker (Module 6)
 
-Docker support is added progressively. Docker Compose and the full stack are planned for Modules 6 and 8.
+For local development without Docker, keep `STORAGE_BACKEND=json` in
+`backend/.env` — no database is needed.
+
+To run with PostgreSQL:
+
+```powershell
+cd C:\dev\insightflow-ai
+docker compose up -d
+docker compose ps
+```
+
+The backend inside Docker Compose connects to PostgreSQL at `db:5432`
+(the Compose service name). From your Windows machine, use `localhost:5433`
+with `psql` or a GUI tool.
+
+Dataset metadata and analysis history persist across `docker compose down`
+and `up` as long as you don't add `-v`, which deletes the named volume.
+
+```powershell
+docker compose logs backend --tail 40
+docker compose exec db psql -U insightflow -d insightflow -c "\dt"
+docker compose down
+```
+
+PostgreSQL stores dataset metadata and analysis history. Uploaded CSV files
+remain on disk. The application supports the JSON storage backend for local
+development and the PostgreSQL storage backend for Docker Compose.
 
 ## API Endpoints
 

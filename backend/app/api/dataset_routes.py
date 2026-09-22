@@ -10,12 +10,23 @@ from app.schemas.error_schema import ErrorResponse
 from app.schemas.profile_schema import DatasetProfile
 from app.services import dataset_service, profiling_service
 from app.services.dataset_repository import DatasetRepository, JsonDatasetRepository
+from app.db.engine import get_session_factory
+from app.services.postgres_dataset_repository import PostgresDatasetRepository
 
 router = APIRouter(prefix="/datasets", tags=["Datasets"])
 
 
 def get_dataset_repository(settings: Settings = Depends(get_settings)) -> DatasetRepository:
-    """Give routes the storage to use. Module 6 will return a PostgreSQL version here."""
+    """Give routes the storage to use.
+
+    STORAGE_BACKEND=json (the default, and what every existing test uses) returns the
+    original JsonDatasetRepository unchanged. STORAGE_BACKEND=postgres (set by Docker
+    Compose) returns PostgresDatasetRepository instead -- both satisfy the exact same
+    DatasetRepository interface, so nothing else in this file, or in dataset_service.py
+    / profiling_service.py, needs to change.
+    """
+    if settings.storage_backend == "postgres":
+        return PostgresDatasetRepository(get_session_factory(settings), settings.upload_dir)
     return JsonDatasetRepository(settings.upload_dir)
 
 
