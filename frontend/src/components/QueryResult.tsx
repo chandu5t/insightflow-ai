@@ -23,6 +23,28 @@ function describeClassifier(response: QueryResponse): string {
     : "Understood by the rule-based classifier";
 }
 
+// NEW in Module 5: the checks that failed, with their machine-readable codes.
+function FailedChecks({ response }: { response: QueryResponse }) {
+  const failed = response.validation.checks.filter((check) => !check.passed);
+  if (failed.length === 0) {
+    return null;
+  }
+  return (
+    <div>
+      <h4>Failed validation checks</h4>
+      <ul className="error-details">
+        {failed.map((check) => (
+          <li key={check.name}>
+            {check.name}
+            {check.code ? ` [${check.code}]` : ""}
+            {check.detail ? `: ${check.detail}` : ""}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function ResultDetails({ result }: { result: ToolResult }) {
   if (result.tool === "aggregation_tool") {
     return (
@@ -154,10 +176,15 @@ function QueryResult({ response }: QueryResultProps) {
             error={new ApiError(problem.message, 200, problem.code, problem.details)}
           />
         )}
+        <FailedChecks response={response} />
         <p className="hint">{describeClassifier(response)}</p>
       </div>
     );
   }
+
+  const checks = response.validation.checks;
+  const passedChecks = checks.filter((check) => check.passed).length;
+  const isDefinitionAnswer = response.calculation_method === "metric_definition";
 
   return (
     <div className="query-result">
@@ -165,16 +192,22 @@ function QueryResult({ response }: QueryResultProps) {
       <p className="answer">{response.explanation}</p>
 
       <div className="badge-row">
+        <span className="badge badge-passed">Outcome: {response.status}</span>
         <span className={`badge badge-${response.validation.status}`}>
           Validation: {response.validation.status}
+          {checks.length > 0 ? ` (${passedChecks}/${checks.length} checks)` : ""}
         </span>
         <span className="badge">{describeClassifier(response)}</span>
         {response.tool_used && <span className="badge">Tool: {response.tool_used}</span>}
       </div>
 
+      {isDefinitionAnswer && (
+        <p className="hint">Definition only. No calculation was performed.</p>
+      )}
+
       {response.result && <ResultDetails result={response.result} />}
 
-      {response.calculation_method && (
+      {response.calculation_method && !isDefinitionAnswer && (
         <p className="hint">Calculation method: {response.calculation_method}</p>
       )}
 
@@ -190,10 +223,10 @@ function QueryResult({ response }: QueryResultProps) {
       )}
 
       <details className="plan-details">
-        <summary>How the question was understood</summary>
+        <summary>How the question was understood and validated</summary>
         <pre>{JSON.stringify(response.query_plan, null, 2)}</pre>
         <ul className="value-list">
-          {response.validation.checks.map((check) => (
+          {checks.map((check) => (
             <li key={check.name}>
               {check.passed ? "Passed" : "Failed"}: {check.name}
             </li>

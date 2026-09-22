@@ -13,7 +13,7 @@ from app.services.explainer import explain
 from app.services.gemini_client import LlmClient
 from app.services.metric_retriever import DEFINITION_MESSAGE, MetricRetriever, StubMetricRetriever
 from app.services.response_builder import NO_FILTERS_NOTE, SUPPORTED_HELP
-from app.services.result_validator import validate_result
+from app.services.result_validator import merge_validations, reconcile_result, validate_result
 from app.utils.dataframe_utils import load_dataframe
 from app.utils.upload_validator import parse_dataset_id
 from app.workflow.graph import run_query_workflow
@@ -40,9 +40,14 @@ def _clean_question(question: str, max_length: int) -> str:
 def validate_for_workflow(
     frame: pd.DataFrame, plan: QueryPlan, result: BaseModel, expected_row_count: int | None
 ) -> ValidationInfo:
-    """The validation the workflow uses. `validate_result` is looked up here at call time."""
-    return validate_result(frame, plan, result)
+    """The existing checks plus the independent reconciliation checks.
 
+    `validate_result` is looked up here at call time, so patching `query_service.validate_result` still works.
+    """
+    return merge_validations(
+        validate_result(frame, plan, result),
+        reconcile_result(frame, plan, result, expected_row_count=expected_row_count),
+    )
 
 def answer_question(
     *,

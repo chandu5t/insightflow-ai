@@ -21,6 +21,10 @@ from app.services.query_dispatcher import TOOL_HANDLERS, dispatch
 from app.services.response_builder import build_response, error_info, unsupported_message
 from app.workflow.state import Route, WorkflowState
 
+from app.schemas.query_schema import ValidationCheck
+from app.services.number_grounding import build_grounding_context, check_grounding
+from app.services.result_validator import ValidationCode
+
 logger = logging.getLogger(__name__)
 
 ValidateFn = Callable[[pd.DataFrame, QueryPlan, BaseModel, int | None], ValidationInfo]
@@ -142,8 +146,33 @@ def make_nodes(deps: WorkflowDependencies) -> dict[str, Callable[[WorkflowState]
         return {"validation": info, "validated_result": result, "trace": ["validate"]}
 
     def explain(state: WorkflowState) -> dict[str, Any]:
-        text = deps.explain(state["query_plan"], state["validated_result"], deps.settings.currency_symbol)
-        return {"explanation": text, "status": "success", "trace": ["explain"]}
+        plan, result = state["query_plan"], state["validated_result"]
+        text = deps.explain(plan, result, deps.settings.currency_symbol)
+        grounding = check_grounding(text, build_grounding_context(plan, result))
+        validation = state["validation"]
+        if not grounding.passed:
+            check = ValidationCheck(
+                name="number_grounding",
+                passed=False,
+                code=ValidationCode.UNGROUNDED_NUMBER.value,
+                detail=f"Unsupported numbers: {', '.join(grounding.unsupported)}",
+            )
+            message = "The explanation could not be verified against the calculated numbers, so it is not shown."
+            return {
+                "validation": ValidationInfo(status="failed", checks=[*validation.checks, check]),
+                "status": "error",
+                "message": message,
+                "error": error_info(ErrorCode.EXPLANATION_NOT_GROUNDED, message,
+                                    {"unsupported_numbers": list(grounding.unsupported)}),
+                "trace": ["explain"],
+            }
+        check = ValidationCheck(name="number_grounding", passed=True)
+        return {
+            "explanation": text,
+            "validation": ValidationInfo(status="passed", checks=[*validation.checks, check]),
+            "status": "success",
+            "trace": ["explain"],
+        }
 
     def metric_definition(state: WorkflowState) -> dict[str, Any]:
         found = deps.retriever.lookup(state["question"])

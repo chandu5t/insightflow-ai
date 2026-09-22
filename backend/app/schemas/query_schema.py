@@ -107,6 +107,7 @@ class ValidationCheck(BaseModel):
     name: str
     passed: bool
     detail: str | None = None
+    code: str | None = None
 
 
 class ValidationInfo(BaseModel):

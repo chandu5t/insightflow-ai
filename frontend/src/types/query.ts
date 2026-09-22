@@ -24,6 +24,7 @@ export interface ValidationCheck {
   name: string;
   passed: boolean;
   detail: string | null;
+  code?: string | null;
 }
 
 export interface ValidationInfo {

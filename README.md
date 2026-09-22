@@ -6,31 +6,17 @@ InsightFlow AI lets you upload a business CSV or Excel file and ask questions in
 
 Python and Pandas perform every calculation. The LLM (Google Gemini) only understands the question and explains results that have already been validated.
 
-> **Status:** Module 4 of 8 (question understanding with Gemini).
+> **Status:** Module 5 of 8 (LangGraph workflow and result validation).
 
 ## Features
 
 Implemented and planned for V1:
 
 - CSV and Excel (`.xlsx`, first sheet) upload with validation and data preview
-- Dataset profiling:
-  - Rows and columns
-  - Data types
-  - Missing values
-  - Duplicate rows
-  - Numeric statistics
-  - Date ranges
-  - Categorical value distributions
-  - Automatic column role detection
-- Controlled analysis tools:
-  - Revenue calculation
-  - Aggregation
-  - Grouping
-  - Ranking
-  - Missing-value analysis
-- Ask questions in plain English (Gemini classification with a rule-based fallback)
-- Natural-language questions using Google Gemini
-- LangGraph workflow with result validation
+- Dataset profiling: rows, columns, data types, missing values, duplicate rows, numeric statistics, date ranges, categorical distributions, and automatic column role detection
+- Controlled analysis tools: revenue, aggregation, grouping, ranking, and missing-value analysis
+- Plain-English questions using Gemini classification with a rule-based fallback
+- LangGraph workflow with result validation and number-grounding checks
 - Basic RAG for business metric definitions (PostgreSQL + pgvector)
 - React frontend with TypeScript
 - Pytest tests
@@ -51,7 +37,7 @@ Implemented and planned for V1:
 
 ## Architecture
 
-React → FastAPI → Dataset Profiling → Question Classifier → Approved Python Tools (Pandas) → Result Validator → Template Explanation → JSON Response.
+React -> FastAPI -> LangGraph workflow (classify, route, execute, validate, explain, respond) -> Pandas tools -> validation and number-grounding checks.
 
 Gemini is used for question classification when configured. A built-in rule-based classifier is used as a fallback. Numerical calculations remain inside Python and Pandas analysis tools.
 
@@ -73,13 +59,9 @@ See `docs/PROJECT_CONTEXT.md` for the current project structure.
 
 ```powershell
 cd backend
-
 python -m venv .venv
-
 .\.venv\Scripts\Activate.ps1
-
 python -m pip install -r requirements.txt
-
 Copy-Item .env.example .env
 ```
 
@@ -87,9 +69,7 @@ Copy-Item .env.example .env
 
 ```powershell
 cd frontend
-
 npm install
-
 Copy-Item .env.example .env
 ```
 
@@ -99,21 +79,19 @@ Copy-Item .env.example .env
 |---|---|---|
 | `backend/.env` | `ENVIRONMENT` | `development` or `production` |
 | `backend/.env` | `LOG_LEVEL` | `DEBUG`, `INFO`, `WARNING`, or `ERROR` |
-| `backend/.env` | `CORS_ORIGINS` | Comma-separated frontend URLs allowed to call the API |
-| `backend/.env` | `MAX_UPLOAD_SIZE_MB` | Maximum upload size (default: 10 MB) |
-| `backend/.env` | `MAX_ROWS` / `MAX_COLUMNS` | Table limits (default: 100000 / 100) |
-| `backend/.env` | `PREVIEW_DEFAULT_ROWS` / `PREVIEW_MAX_ROWS` | Preview size (default: 5 / 20) |
-| `backend/.env` | `PROFILE_TOP_VALUES` | Maximum categorical values shown in profiling results |
-| `backend/.env` | `PROFILE_VALUE_MAX_LENGTH` | Maximum length of displayed categorical values |
+| `backend/.env` | `CORS_ORIGINS` | Comma-separated frontend URLs |
+| `backend/.env` | `MAX_UPLOAD_SIZE_MB` | Maximum upload size; default 10 MB |
+| `backend/.env` | `MAX_ROWS` / `MAX_COLUMNS` | Table limits; default 100000 / 100 |
+| `backend/.env` | `PREVIEW_DEFAULT_ROWS` / `PREVIEW_MAX_ROWS` | Preview size; default 5 / 20 |
+| `backend/.env` | `PROFILE_TOP_VALUES` | Maximum categorical values shown |
+| `backend/.env` | `PROFILE_VALUE_MAX_LENGTH` | Maximum displayed categorical value length |
 | `backend/.env` | `GEMINI_API_KEY` | Gemini API key; backend only and never commit |
-| `backend/.env` | `GEMINI_MODEL` | Gemini model used for question classification |
-| `backend/.env` | `GEMINI_TIMEOUT_SECONDS` | Gemini request timeout in seconds |
-| `backend/.env` | `GEMINI_MIN_CONFIDENCE` | Minimum confidence required to accept Gemini classification |
-| `backend/.env` | `MAX_QUESTION_LENGTH` | Maximum allowed question length |
-| `backend/.env` | `CURRENCY_SYMBOL` | Currency symbol used in explanations (default: `₹`) |
+| `backend/.env` | `GEMINI_MODEL` | Gemini model used for classification |
+| `backend/.env` | `GEMINI_TIMEOUT_SECONDS` | Gemini request timeout |
+| `backend/.env` | `GEMINI_MIN_CONFIDENCE` | Minimum accepted Gemini confidence |
+| `backend/.env` | `MAX_QUESTION_LENGTH` | Maximum question length |
+| `backend/.env` | `CURRENCY_SYMBOL` | Currency symbol; default `₹` |
 | `frontend/.env` | `VITE_API_URL` | Backend URL used by React |
-
-All environment variables listed above are optional unless otherwise specified.
 
 > **Important:** Never commit `.env` files or API keys.
 
@@ -121,45 +99,54 @@ All environment variables listed above are optional unless otherwise specified.
 
 ```powershell
 cd backend
-
 .\.venv\Scripts\Activate.ps1
-
 uvicorn app.main:app --reload --port 8000
 ```
 
-API documentation:
-
-[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+API documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
 ## Running the Frontend
 
 ```powershell
 cd frontend
-
 npm run dev
 ```
 
-Open:
-
-[http://localhost:5173](http://localhost:5173)
+Open: [http://localhost:5173](http://localhost:5173)
 
 ## Running Tests
 
 ```powershell
 cd backend
-
 .\.venv\Scripts\Activate.ps1
-
 pytest -v
 ```
 
 Current test status:
 
-- **559 tests passed**
+- **633 tests passed**
 - Backend unit tests and API tests
-- Profiling and analysis tool tests
-- Question classification, dispatching, validation, and explanation tests
-- Evaluation tests
+- Profiling, analysis, classification, dispatching, validation, reconciliation, number-grounding, explanation, and evaluation tests
+
+Frontend verification:
+
+```powershell
+cd frontend
+npm run lint
+npm run build
+```
+
+Both frontend commands pass.
+
+## Workflow and Validation (Module 5)
+
+Each question runs through a LangGraph workflow: classify -> route -> execute -> validate -> explain -> respond.
+Failures skip the steps that make no sense (for example, no explanation is written for a result that failed validation).
+
+- **Validation:** finite numbers, row accounting, an independent recomputation of the result, the row count against the upload, and (for groups) totals that add up. Each failed check has a machine-readable code.
+- **Number grounding:** every number in an explanation must come from the validated result. Otherwise the answer is rejected with `EXPLANATION_NOT_GROUNDED`.
+- **Definitions:** "What is revenue?" is routed to a metric-definition branch. It is a stub until Module 7 and never pretends to have found a definition.
+- The `POST /analysis/query` response format is unchanged.
 
 ## Docker
 
@@ -171,43 +158,38 @@ Docker support is added progressively. Docker Compose and the full stack are pla
 |---|---|---|---|
 | GET | `/health` | Backend health check | 1 |
 | POST | `/datasets/upload` | Upload a CSV or `.xlsx` file | 2 |
-| GET | `/datasets/{dataset_id}/preview` | First rows of a dataset (default: 5, maximum: 20) | 2 |
+| GET | `/datasets/{dataset_id}/preview` | Preview dataset rows | 2 |
 | GET | `/datasets/{dataset_id}/profile` | Generate a complete dataset profile | 3 |
-| POST | `/analysis/query` | Ask a question about a dataset | 4 |
+| POST | `/analysis/query` | Ask a question about a dataset | 4–5 |
 
 ## Analysis Tools
 
-Implemented in Module 3:
-
 | Tool | Description |
 |---|---|
-| Revenue Tool | Calculates total revenue using a direct revenue column or `quantity × unit_price` |
-| Aggregation Tool | Performs supported numerical aggregations such as sum, mean, minimum, maximum, and count |
+| Revenue Tool | Calculates total revenue using direct revenue or `quantity × unit_price` |
+| Aggregation Tool | Supports sum, mean, minimum, maximum, and count |
 | Grouping Tool | Groups data by categorical columns and calculates supported metrics |
 | Ranking Tool | Ranks grouped results in ascending or descending order |
 | Missing Value Tool | Analyzes missing values across dataset columns |
-| Profiling Tool | Generates dataset metadata, column statistics, data types, duplicates, and warnings |
+| Profiling Tool | Generates metadata, statistics, types, duplicates, and warnings |
 
 All analysis tools use deterministic Python and Pandas calculations. The LLM does not directly perform numerical calculations.
 
-## Asking Questions (Module 4)
+## Asking Questions (Modules 4–5)
 
-Type a question in plain English. Gemini (or a built-in rule-based fallback) only decides WHAT is asked.
-Python and Pandas calculate the answer, the result is validated, and the explanation comes from templates.
+Gemini, or the rule-based fallback, decides what the question means. Python and Pandas calculate the answer, the result is independently validated, and the explanation comes from templates. Number-grounding checks reject explanations containing unsupported numbers.
 
 | Question | Needs |
 |---|---|
-| What is the total revenue? | a revenue column, or quantity and unit price |
-| Revenue by region / Which region generated the highest revenue? | revenue fields and a region column |
-| What is the average unit price? / maximum quantity? | that column |
-| How many records are present? | nothing |
-| What is the average order value? | revenue fields and an order id |
-| Are there missing values? | nothing |
-| What is revenue? | not available yet (Module 7) |
+| What is the total revenue? | A revenue column, or quantity and unit price |
+| Revenue by region / Which region generated the highest revenue? | Revenue fields and a region column |
+| What is the average unit price? / maximum quantity? | That column |
+| How many records are present? | Nothing |
+| What is the average order value? | Revenue fields and an order ID |
+| Are there missing values? | Nothing |
+| What is revenue? | Not available yet; Module 7 |
 
-Setup: create a key in Google AI Studio and add `GEMINI_API_KEY=...` to `backend/.env` (never commit it).
-
-Without a key the rule-based classifier answers. Filters (for example one region or a date range) and forecasts are not supported.
+Without a Gemini key, the rule-based classifier answers. Filters and forecasts are not supported.
 
 ## Screenshots
 
