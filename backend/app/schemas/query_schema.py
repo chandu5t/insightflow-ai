@@ -138,6 +138,7 @@ class QueryResponse(BaseModel):
     tool_used: str | None = None
     result: ToolResult | None = None
     explanation: str | None = None
+    definition_source: str | None = None
     calculation_method: str | None = None
     assumptions: list[str] = Field(default_factory=list)
     validation: ValidationInfo = Field(default_factory=lambda: ValidationInfo(status="not_run"))

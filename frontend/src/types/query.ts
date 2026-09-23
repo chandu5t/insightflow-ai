@@ -130,4 +130,5 @@ export interface QueryResponse {
   validation: ValidationInfo;
   message: string | null;
   error: QueryErrorInfo | null;
+  definition_source: string | null;
 }

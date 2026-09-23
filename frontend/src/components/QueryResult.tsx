@@ -199,6 +199,14 @@ function QueryResult({ response }: QueryResultProps) {
         </span>
         <span className="badge">{describeClassifier(response)}</span>
         {response.tool_used && <span className="badge">Tool: {response.tool_used}</span>}
+        
+        {response.definition_source && (
+          <span className="badge badge-passed">
+            Source: {response.definition_source === "knowledge_base"
+              ? "InsightFlow AI built-in knowledge base"
+              : response.definition_source}
+          </span>
+        )}
       </div>
 
       {isDefinitionAnswer && (

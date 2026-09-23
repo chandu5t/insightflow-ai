@@ -58,6 +58,11 @@ class Settings(BaseSettings):
     postgres_user: str = "insightflow"
     postgres_password: SecretStr = SecretStr("")
     postgres_db: str = "insightflow"
+    # ---- RAG / knowledge base (Module 7). ----
+    gemini_embedding_model: str = "gemini-embedding-001"
+    knowledge_embedding_dimensions: int = Field(default=768, gt=0, le=3072)
+    knowledge_similarity_threshold: float = Field(default=0.6, ge=-1.0, le=1.0)
+    knowledge_top_k: int = Field(default=3, ge=1, le=3)
 
     @property
     def database_url(self) -> str:

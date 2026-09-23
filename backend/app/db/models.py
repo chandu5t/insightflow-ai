@@ -11,6 +11,7 @@ from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from pgvector.sqlalchemy import Vector
 
 from app.db.base import Base
 
@@ -72,3 +73,55 @@ class AnalysisHistoryRow(Base):
     )  # supports "most recent questions first" -- the natural way to view history
 
     dataset: Mapped["DatasetRow"] = relationship(back_populates="history")
+
+class KnowledgeDocumentRow(Base):
+    """One row per business-metric definition (Module 7)."""
+
+    __tablename__ = "knowledge_documents"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        PostgresUUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+
+    slug: Mapped[str] = mapped_column(
+        String(100),
+        unique=True,
+        nullable=False,
+        index=True,
+    )
+
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+
+    definition: Mapped[str] = mapped_column(Text, nullable=False)
+
+    category: Mapped[str] = mapped_column(String(50), nullable=False)
+
+    source: Mapped[str] = mapped_column(
+        String(200),
+        nullable=False,
+        default="InsightFlow AI built-in knowledge base",
+    )
+
+    embedding: Mapped[list[float] | None] = mapped_column(
+        Vector(768),
+        nullable=True,
+    )
+
+    doc_metadata: Mapped[dict] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=dict,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+    )

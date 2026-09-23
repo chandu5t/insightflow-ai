@@ -6,7 +6,7 @@ InsightFlow AI lets you upload a business CSV or Excel file and ask questions in
 
 Python and Pandas perform every calculation. The LLM (Google Gemini) only understands the question and explains results that have already been validated.
 
-> **Status:** Module 6 of 8 (PostgreSQL persistence).
+> **Status:** Module 7 of 8 (Basic RAG with pgvector).
 
 ## Features
 
@@ -103,6 +103,10 @@ Copy-Item .env.example .env
 | `backend/.env` | `POSTGRES_DB` | PostgreSQL database name |
 | `backend/.env` | `POSTGRES_HOST` | PostgreSQL host |
 | `backend/.env` | `POSTGRES_PORT` | PostgreSQL port |
+| `backend/.env` | `GEMINI_EMBEDDING_MODEL` | Embedding model; default `gemini-embedding-001` |
+| `backend/.env` | `KNOWLEDGE_EMBEDDING_DIMENSIONS` | Embedding dimensions; default `768` |
+| `backend/.env` | `KNOWLEDGE_SIMILARITY_THRESHOLD` | Minimum similarity threshold; default `0.6` |
+| `backend/.env` | `KNOWLEDGE_TOP_K` | Maximum retrieved knowledge documents; default `3` |
 | `frontend/.env` | `VITE_API_URL` | Backend URL used by React |
 
 > **Important:** Never commit `.env` files or API keys.
@@ -141,7 +145,7 @@ pytest -v
 
 Current test status:
 
-- **659 tests passed**
+- **693 tests passed**
 - Backend unit tests and API tests
 - Profiling, analysis, classification, dispatching, validation, reconciliation, number-grounding, explanation, evaluation, and PostgreSQL integration tests
 
@@ -165,10 +169,10 @@ Failures skip the steps that make no sense (for example, no explanation is writt
 
 - **Validation:** finite numbers, row accounting, an independent recomputation of the result, the row count against the upload, and (for groups) totals that add up. Each failed check has a machine-readable code.
 - **Number grounding:** every number in an explanation must come from the validated result. Otherwise the answer is rejected with `EXPLANATION_NOT_GROUNDED`.
-- **Definitions:** "What is revenue?" is routed to a metric-definition branch. It is a stub until Module 7 and never pretends to have found a definition.
+- **Definitions:** Metric-definition questions use the Module 7 knowledge base when PostgreSQL and Gemini embeddings are configured. If no match is found or the knowledge base is unavailable, the existing stub response is returned.
 - The `POST /analysis/query` response format is unchanged.
 
-## PostgreSQL and Docker (Module 6)
+## PostgreSQL and Docker (Modules 6–7)
 
 For local development without Docker, keep `STORAGE_BACKEND=json` in
 `backend/.env` — no database is needed.
@@ -207,6 +211,7 @@ development and the PostgreSQL storage backend for Docker Compose.
 | GET | `/datasets/{dataset_id}/preview` | Preview dataset rows | 2 |
 | GET | `/datasets/{dataset_id}/profile` | Generate a complete dataset profile | 3 |
 | POST | `/analysis/query` | Ask a question about a dataset | 4–5 |
+| POST | `/knowledge/search` | Search the built-in metric knowledge base | 7 |
 
 ## Analysis Tools
 
@@ -233,9 +238,21 @@ Gemini, or the rule-based fallback, decides what the question means. Python and 
 | How many records are present? | Nothing |
 | What is the average order value? | Revenue fields and an order ID |
 | Are there missing values? | Nothing |
-| What is revenue? | Not available yet; Module 7 |
+| What is revenue? | Built-in knowledge base when PostgreSQL and Gemini are configured; otherwise the existing stub response |
 
 Without a Gemini key, the rule-based classifier answers. Filters and forecasts are not supported.
+
+## RAG Knowledge Base (Module 7)
+
+Requires `STORAGE_BACKEND=postgres` and a real `GEMINI_API_KEY`. Seed the knowledge base once after deployment or schema changes:
+
+```powershell
+docker compose exec backend python -m app.scripts.seed_knowledge_base
+```
+
+Questions such as "What does average order value mean?" can return a retrieved definition with a **Source: InsightFlow AI built-in knowledge base** badge. If there is no matching definition, or PostgreSQL/Gemini is unavailable, the existing stub response is returned instead.
+
+Seeding is explicit and is not performed automatically at application startup.
 
 ## Screenshots
 

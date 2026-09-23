@@ -20,7 +20,10 @@ from app.services.analysis_history_repository import (
 from app.services.dataset_repository import DatasetRepository
 from app.services.explainer import explain
 from app.services.gemini_client import GeminiClient, LlmClient
-from app.services.metric_retriever import MetricRetriever, StubMetricRetriever
+from app.services.metric_retriever import MetricRetriever, StubMetricRetriever, KnowledgeBaseMetricRetriever
+from app.db.engine import get_session_factory
+from app.services.embedding_service import GeminiEmbeddingService
+from app.services.knowledge_search_service import KnowledgeSearchService
 
 router = APIRouter(prefix="/analysis", tags=["Analysis"])
 logger = logging.getLogger(__name__)
@@ -35,8 +38,22 @@ def get_llm_client(settings: Settings = Depends(get_settings)) -> LlmClient:
     )
 
 
-def get_metric_retriever() -> MetricRetriever:
-    """The definition lookup. It is a stub until Module 7."""
+def get_metric_retriever(settings: Settings = Depends(get_settings)) -> MetricRetriever:
+    """Real knowledge-base lookup when Postgres + Gemini are both configured; the
+    Module 5 stub otherwise (JSON mode, or no Gemini key -- e.g. most test runs).
+    """
+    if settings.storage_backend == "postgres" and settings.gemini_api_key_value:
+        embedding_service = GeminiEmbeddingService(
+            api_key=settings.gemini_api_key_value,
+            model=settings.gemini_embedding_model,
+            dimensions=settings.knowledge_embedding_dimensions,
+            timeout_seconds=settings.gemini_timeout_seconds,
+        )
+        search_service = KnowledgeSearchService(
+            get_session_factory(settings), embedding_service,
+            top_k_limit=settings.knowledge_top_k, threshold=settings.knowledge_similarity_threshold,
+        )
+        return KnowledgeBaseMetricRetriever(search_service)
     return StubMetricRetriever()
 
 

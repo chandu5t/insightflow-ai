@@ -11,6 +11,7 @@ from app.api.health_routes import router as health_router
 from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
 from app.core.logging_config import setup_logging
+from app.api.knowledge_routes import router as knowledge_router
 
 settings = get_settings()
 setup_logging(settings.log_level)
@@ -39,6 +40,7 @@ register_exception_handlers(app)
 app.include_router(health_router)
 app.include_router(dataset_router)
 app.include_router(analysis_router)
+app.include_router(knowledge_router)
 
 logger.info(
     "%s v%s configured (environment=%s, allowed origins=%s)",

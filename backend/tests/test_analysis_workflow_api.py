@@ -17,7 +17,7 @@ from tests.workflow_helpers import FakeRetriever, SpyExplainer
 MakeClient = Callable[..., TestClient]
 BODY_KEYS = {
     "status", "question", "dataset_id", "classifier", "query_plan", "tool_used", "result",
-    "explanation", "calculation_method", "assumptions", "validation", "message", "error",
+    "explanation", "calculation_method", "assumptions", "validation", "message", "error", "definition_source",
 }
 
 

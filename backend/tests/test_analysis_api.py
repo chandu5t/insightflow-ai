@@ -21,7 +21,7 @@ UNKNOWN_ID = "123e4567-e89b-42d3-a456-426614174000"
 MakeClient = Callable[..., TestClient]
 BODY_KEYS = {
     "status", "question", "dataset_id", "classifier", "query_plan", "tool_used", "result",
-    "explanation", "calculation_method", "assumptions", "validation", "message", "error",
+    "explanation", "calculation_method", "assumptions", "validation", "message", "error", "definition_source",
 }
 
 
