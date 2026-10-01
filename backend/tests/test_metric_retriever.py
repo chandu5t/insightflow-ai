@@ -11,7 +11,7 @@ def test_stub_result_has_the_expected_structure() -> None:
 
     assert result.found is False and result.is_stub is True and result.source == "stub"
     assert result.definition is None and result.query == "What is average order value?"
-    assert result.message == DEFINITION_MESSAGE and "Module 7" in result.message
+    assert result.message == DEFINITION_MESSAGE
 
 
 @pytest.mark.parametrize("question", ["What is revenue?", "define conversion rate", "", "anything"])

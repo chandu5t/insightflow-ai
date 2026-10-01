@@ -57,7 +57,11 @@ def test_definition_question_uses_the_metric_definition_branch(sales) -> None:
     assert explainer.calls == 0
     response = final["response"]
     assert response.status == "unsupported" and response.result is None and response.explanation is None
-    assert response.error.details == {"reason": "definition_not_available"} and "Module 7" in response.message
+    assert response.error.details == {"reason": "definition_not_available"} and response.message == (
+        "A matching business metric definition is not available. "
+        "You can ask a calculation question such as "
+        "'What is the total revenue?'."
+    )
 
 
 def test_a_found_definition_is_a_success_without_any_calculation(sales) -> None:

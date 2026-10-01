@@ -21,9 +21,8 @@ logger = logging.getLogger(__name__)
 
 
 DEFINITION_MESSAGE = (
-    "Business metric definitions are not available yet. "
-    "They will be added in Module 7. "
-    "For now, ask a calculation question such as "
+    "A matching business metric definition is not available. "
+    "You can ask a calculation question such as "
     "'What is the total revenue?'."
 )
 

@@ -155,7 +155,11 @@ def test_definition_question_returns_the_module_7_fallback(analysis) -> None:
     body = response.json()
     assert response.status_code == 200 and body["status"] == "unsupported"
     assert body["result"] is None and body["explanation"] is None
-    assert "Module 7" in body["message"]
+    assert body["message"] == (
+        "A matching business metric definition is not available. "
+        "You can ask a calculation question such as "
+        "'What is the total revenue?'."
+    )
     assert body["error"]["code"] == "UNSUPPORTED_QUESTION"
     assert body["error"]["details"] == {"reason": "definition_not_available"}
     assert body["query_plan"]["intent"] == "definition"

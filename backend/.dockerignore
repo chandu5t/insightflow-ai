@@ -9,3 +9,5 @@ data/samples/
 tests/
 .env
 *.egg-info/
+.env.*
+!.env.example

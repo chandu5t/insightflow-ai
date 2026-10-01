@@ -33,15 +33,13 @@ def get_db_session(settings: Settings = Depends(get_settings)) -> Generator[Sess
 
 
 def init_db(settings: Settings) -> None:
-    """Create the datasets/analysis_history tables if they do not already exist.
+    """Create missing application tables.
 
-    Uses Base.metadata.create_all() -- idempotent (safe every startup) but, unlike Alembic,
-    cannot ALTER an existing table. With only two tables and no production data yet, this is
-    the simpler choice for this stage (see D-057). If a column is ever added or renamed later,
-    a manual migration -- or introducing Alembic then -- becomes necessary.
+    create_all() creates missing tables but does not ALTER existing tables.
+    It is not a general database migration strategy.
     """
     from app.db import models  # noqa: F401  (import so Base.metadata knows about the tables)
 
     engine = get_engine(settings.database_url)
     Base.metadata.create_all(bind=engine)
-    logger.info("PostgreSQL tables ensured (datasets, analysis_history).")
+    logger.info("PostgreSQL tables ensured.")

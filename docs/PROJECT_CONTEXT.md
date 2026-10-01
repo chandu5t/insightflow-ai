@@ -985,3 +985,34 @@ Module 6 implementation is complete.
 - Seeding must be run manually after deployment/schema changes.
 - `gemini-embedding-2` (Google's newer model) uses an incompatible embedding space —
   switching models later requires re-seeding, not just a config change.
+
+  ## Current project status
+
+Modules 1–7 are implemented according to the supplied repository inspection.
+Module 8 is release preparation and must not be marked complete until local
+tests, Docker, E2E, persistence, clean-clone, and security checks have been run.
+
+### Current architecture
+- FastAPI backend; React + TypeScript frontend
+- CSV and first-sheet XLSX converted to local CSV storage
+- Python/Pandas tools calculate; Gemini classifies and embeds
+- Controlled LangGraph workflow with validation and number grounding
+- JSON or PostgreSQL persistence; PostgreSQL uses pgvector for definitions
+- RAG seeding is manual
+
+### Database and Docker
+- PostgreSQL image: pgvector/pgvector:0.8.6-pg16
+- PostgreSQL volume: pgdata:/var/lib/postgresql/data
+- Init mount: ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+- Docker backend -> db:5432; host backend -> localhost:8001
+- Host PostgreSQL -> localhost:5433
+- create_all() creates missing tables but is not a general migration system
+
+### Test reporting
+Record actual collected, passed, skipped, failed, and warning totals from
+each local run. Previously recorded baseline: 665 passed, 28 skipped,
+1 warning; this is not a current verification. Do not describe 693 as passed.
+
+### Known limitations
+No authentication, local upload storage, synchronous processing, manual
+Gemini-dependent RAG seed, no ANN index, and no migration framework.

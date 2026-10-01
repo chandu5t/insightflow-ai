@@ -3,7 +3,7 @@
 from app.core.errors import AppError, ErrorCode
 from app.services.gemini_client import GeminiNotConfiguredError
 from app.services.knowledge_search_service import KnowledgeSearchResult
-from app.services.metric_retriever import KnowledgeBaseMetricRetriever
+from app.services.metric_retriever import DEFINITION_MESSAGE, KnowledgeBaseMetricRetriever
 
 
 class FakeSearchService:
@@ -34,7 +34,7 @@ def test_no_results_falls_back_to_the_stub_response() -> None:
     outcome = KnowledgeBaseMetricRetriever(FakeSearchService(results=[])).lookup("What is zorblatt?")
 
     assert outcome.found is False and outcome.is_stub is True and outcome.source == "stub"
-    assert "Module 7" in outcome.message  # exact stub wording from Module 5
+    assert outcome.message == DEFINITION_MESSAGE
 
 
 def test_embedding_failure_falls_back_to_the_stub_response() -> None:

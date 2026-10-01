@@ -63,7 +63,11 @@ def test_unsupported_and_definition_responses_are_unchanged(workflow_client) -> 
     definition = ask(client, dataset_id, "What is revenue?").json()
 
     assert unsupported["status"] == "unsupported" and unsupported["error"]["details"] == {"reason": "unsupported_question"}
-    assert definition["status"] == "unsupported" and "Module 7" in definition["message"]
+    assert definition["status"] == "unsupported" and definition["message"] == (
+        "A matching business metric definition is not available. "
+        "You can ask a calculation question such as "
+        "'What is the total revenue?'."
+    )
     assert definition["error"]["details"] == {"reason": "definition_not_available"}
 
 
