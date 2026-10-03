@@ -13,6 +13,7 @@ from app.core.errors import register_exception_handlers
 from app.core.logging_config import setup_logging
 from app.api.knowledge_routes import router as knowledge_router
 from app.api.planner_routes import router as planner_router
+from app.api.multi_agent_routes import router as multi_agent_router
 
 settings = get_settings()
 setup_logging(settings.log_level)
@@ -43,6 +44,7 @@ app.include_router(dataset_router)
 app.include_router(analysis_router)
 app.include_router(knowledge_router)
 app.include_router(planner_router)
+app.include_router(multi_agent_router)
 
 logger.info(
     "%s v%s configured (environment=%s, allowed origins=%s)",
