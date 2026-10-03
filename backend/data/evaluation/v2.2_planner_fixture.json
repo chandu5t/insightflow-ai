@@ -1,0 +1,87 @@
+{
+  "fixture_version": "v2.2-development-1",
+  "description": "Small planner component fixture; not the frozen InsightFlow-Bench and not a V1 or V2 outcome report.",
+  "cases": [
+    {
+      "id": "P001",
+      "question": "What is the total revenue?",
+      "category": "simple_aggregation",
+      "expected_intent": "total_revenue",
+      "expected_reasoning_type": "simple",
+      "expected_operations": ["derive_metric", "aggregate"],
+      "expected_dependency_edges": [["aggregate", "derive_metric"]]
+    },
+    {
+      "id": "P002",
+      "question": "Show total revenue by region.",
+      "category": "grouping",
+      "expected_intent": "regional_revenue_ranking",
+      "expected_reasoning_type": "multi_step",
+      "expected_operations": ["derive_metric", "group_by", "aggregate"],
+      "expected_dependency_edges": [["group_by", "derive_metric"], ["aggregate", "group_by"]]
+    },
+    {
+      "id": "P003",
+      "question": "Which region generated the highest revenue?",
+      "category": "ranking",
+      "expected_intent": "regional_revenue_ranking",
+      "expected_reasoning_type": "multi_step",
+      "expected_operations": ["derive_metric", "group_by", "aggregate", "rank", "top_n"],
+      "expected_dependency_edges": [["group_by", "derive_metric"], ["aggregate", "group_by"], ["rank", "aggregate"], ["top_n", "rank"]]
+    },
+    {
+      "id": "P004",
+      "question": "What was revenue for the North region?",
+      "category": "filtering",
+      "expected_intent": "filtered_revenue",
+      "expected_reasoning_type": "multi_step",
+      "expected_operations": ["filter_rows", "derive_metric", "aggregate"],
+      "expected_dependency_edges": [["derive_metric", "filter_rows"], ["aggregate", "derive_metric"]]
+    },
+    {
+      "id": "P005",
+      "question": "Compare revenue between North and South.",
+      "category": "comparison",
+      "expected_intent": "compare_groups",
+      "expected_reasoning_type": "multi_step",
+      "expected_operations": ["derive_metric", "filter_rows", "aggregate", "calculate_difference", "compare_groups"],
+      "expected_dependency_edges": [["filter_rows", "derive_metric"], ["aggregate", "filter_rows"], ["calculate_difference", "aggregate"], ["compare_groups", "calculate_difference"]]
+    },
+    {
+      "id": "P006",
+      "question": "Which region had the highest revenue and what was the percentage difference from the second highest?",
+      "category": "multi_step_analysis",
+      "expected_intent": "regional_revenue_ranking",
+      "expected_reasoning_type": "multi_step",
+      "expected_operations": ["derive_metric", "group_by", "aggregate", "rank", "top_n", "calculate_percentage_difference"],
+      "expected_dependency_edges": [["group_by", "derive_metric"], ["aggregate", "group_by"], ["rank", "aggregate"], ["top_n", "rank"], ["calculate_percentage_difference", "top_n"]]
+    },
+    {
+      "id": "P007",
+      "question": "What does average order value mean?",
+      "category": "metric_definition",
+      "expected_intent": "metric_definition",
+      "expected_reasoning_type": "definition",
+      "expected_operations": [],
+      "expected_dependency_edges": []
+    },
+    {
+      "id": "P008",
+      "question": "Forecast revenue for the next quarter.",
+      "category": "unsupported",
+      "expected_intent": "unsupported_analysis",
+      "expected_reasoning_type": "unsupported",
+      "expected_operations": [],
+      "expected_dependency_edges": []
+    },
+    {
+      "id": "P009",
+      "question": "Which product performed best?",
+      "category": "ambiguous",
+      "expected_intent": "unsupported_analysis",
+      "expected_reasoning_type": "unsupported",
+      "expected_operations": [],
+      "expected_dependency_edges": []
+    }
+  ]
+}
