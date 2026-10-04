@@ -4,6 +4,7 @@ import type { ApiErrorBody } from "../types/api";
 import type { DatasetPreviewResponse, DatasetSummary } from "../types/dataset";
 import type { DatasetProfileResponse } from "../types/profile";
 import type { QueryResponse } from "../types/query";
+import type { VisualizationRequest, VisualizationResponse } from "../types/visualization";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
@@ -130,4 +131,14 @@ export function askQuestion(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ dataset_id: datasetId, question }),
   }) as Promise<QueryResponse>;
+}
+
+export function visualizeAnalysis(
+  payload: VisualizationRequest,
+): Promise<VisualizationResponse> {
+  return request("/analysis/visualize", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  }) as Promise<VisualizationResponse>;
 }

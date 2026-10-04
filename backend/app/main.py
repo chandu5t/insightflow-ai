@@ -16,6 +16,7 @@ from app.api.planner_routes import router as planner_router
 from app.api.multi_agent_routes import router as multi_agent_router
 from app.api.verification_routes import router as verification_router
 from app.api.correction_routes import router as correction_router
+from app.api.visualization_routes import router as visualization_router
 
 settings = get_settings()
 setup_logging(settings.log_level)
@@ -49,6 +50,7 @@ app.include_router(planner_router)
 app.include_router(multi_agent_router)
 app.include_router(verification_router)
 app.include_router(correction_router)
+app.include_router(visualization_router)
 
 logger.info(
     "%s v%s configured (environment=%s, allowed origins=%s)",
