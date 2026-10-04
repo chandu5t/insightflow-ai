@@ -3,7 +3,13 @@
 import pytest
 
 from app.core.errors import ErrorCode
-from app.services.gemini_client import GeminiClient, GeminiNotConfiguredError, GeminiRequestError
+from app.services.gemini_client import (
+    GeminiClient,
+    GeminiNotConfiguredError,
+    GeminiRequestError,
+    LlmCallResult,
+    _provider_token_count,
+)
 
 
 def make(key: str = "sk-SECRET-123") -> GeminiClient:
@@ -83,3 +89,28 @@ def test_empty_reply_is_a_request_error(monkeypatch, reply) -> None:
 
 def test_the_key_is_never_shown_in_repr() -> None:
     assert "sk-SECRET-123" not in repr(make())
+
+
+def test_usage_metadata_is_exposed_only_when_provider_supplies_counts(monkeypatch) -> None:
+    client = make()
+    monkeypatch.setattr(
+        client,
+        "_call_sdk_with_usage",
+        lambda system_prompt, user_prompt: LlmCallResult(
+            text='{"a": 1}', input_tokens=23, output_tokens=7
+        ),
+    )
+    result = client.generate_json_with_usage(system_prompt="s", user_prompt="u")
+    assert result.text == '{"a": 1}'
+    assert result.input_tokens == 23
+    assert result.output_tokens == 7
+
+
+def test_usage_metadata_parser_does_not_estimate_missing_or_invalid_values() -> None:
+    class Usage:
+        prompt_token_count = 23
+        candidates_token_count = None
+
+    assert _provider_token_count(Usage(), "prompt_token_count") == 23
+    assert _provider_token_count(Usage(), "candidates_token_count") is None
+    assert _provider_token_count({"prompt_token_count": "23"}, "prompt_token_count") is None
