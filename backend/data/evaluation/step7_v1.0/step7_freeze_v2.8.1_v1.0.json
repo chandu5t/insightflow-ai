@@ -6,10 +6,10 @@
     "version": "V2.8.1",
     "document": "docs/V2.8.1_SEMANTIC_EXECUTION_AMENDMENT.md",
     "document_sha256": "29ec3148511b888fc6bdbe54d384b3718516b372cb439b263ad4174b7378f25e",
-    "implementation_source_git_commit": "fcff2f9f0e2e9bf3625f6bbc664cf33415b5388e",
+    "implementation_source_git_commit": "a932214007c2f87adae9b48b6c2af9a172bb5db3",
     "branch": "v2-development",
-    "working_tree_dirty": true,
-    "commit_interpretation": "The Git commit identifies the source base. V2.8.1 implementation changes are not committed; the following SHA-256 map fingerprints the implementation files as frozen in the working tree.",
+    "working_tree_dirty": false,
+    "commit_interpretation": "The V2.8.1 implementation is committed. This commit is the reproducibility source revision. The only remaining untracked path is the diagnostic official_runs_v1.0 directory, intentionally excluded from the research commit; the following SHA-256 map fingerprints the implementation files.",
     "implementation_file_sha256": {
       "backend/app/multi_agent/agents.py": "b885e85fa72096191a8ad1b71ce9dc6e2bb8eb545db821222e9bba3a0179a833",
       "backend/app/multi_agent/schemas.py": "4cc367024d05498c9497dda019cd49dd09d22641935d73c956adb00c52b8f7d1",
