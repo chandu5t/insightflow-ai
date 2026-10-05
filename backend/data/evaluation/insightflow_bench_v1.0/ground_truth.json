@@ -1,0 +1,2664 @@
+[
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum(quantity * unit_price)",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "derive_metric",
+        "aggregate"
+      ],
+      "final_result": 256000,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "derived_revenue_total",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 256000
+    },
+    "id": "IFB-001"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "count(rows)",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "count"
+      ],
+      "final_result": 13,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "derived_rows",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 13
+    },
+    "id": "IFB-002"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "count(distinct order_id)",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "distinct_count"
+      ],
+      "final_result": 10,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "derived_distinct_orders",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 10
+    },
+    "id": "IFB-003"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum(quantity)",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "aggregate"
+      ],
+      "final_result": 30,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "derived_quantity_total",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 30
+    },
+    "id": "IFB-004"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum line revenue where category = Electronics",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "derive_metric",
+        "aggregate"
+      ],
+      "final_result": 230000,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "electronics_revenue",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 230000
+    },
+    "id": "IFB-005"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum line revenue where category = Accessories",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "derive_metric",
+        "aggregate"
+      ],
+      "final_result": 26000,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "accessories_revenue",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 26000
+    },
+    "id": "IFB-006"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum line revenue where product = Laptop",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "derive_metric",
+        "aggregate"
+      ],
+      "final_result": 200000,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "laptop_revenue",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 200000
+    },
+    "id": "IFB-007"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum line revenue where product = Headset",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "derive_metric",
+        "aggregate"
+      ],
+      "final_result": 16000,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "headset_revenue",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 16000
+    },
+    "id": "IFB-008"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum(Total Revenue)",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "aggregate"
+      ],
+      "final_result": 121800,
+      "metadata": {
+        "dataset_snapshot": "module3_sales_direct.csv",
+        "reference_key": "direct_revenue_total",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 121800
+    },
+    "id": "IFB-009"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum(Quantity)",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "aggregate"
+      ],
+      "final_result": 12,
+      "metadata": {
+        "dataset_snapshot": "module3_sales_direct.csv",
+        "reference_key": "direct_quantity_total",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 12
+    },
+    "id": "IFB-010"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "count(rows)",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "count"
+      ],
+      "final_result": 6,
+      "metadata": {
+        "dataset_snapshot": "module3_sales_direct.csv",
+        "reference_key": "direct_rows",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 6
+    },
+    "id": "IFB-011"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "count(distinct Order ID)",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "distinct_count"
+      ],
+      "final_result": 5,
+      "metadata": {
+        "dataset_snapshot": "module3_sales_direct.csv",
+        "reference_key": "direct_distinct_orders",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 5
+    },
+    "id": "IFB-012"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum line revenue where region = North",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "derive_metric",
+        "aggregate"
+      ],
+      "final_result": 106500,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "north_revenue",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 106500
+    },
+    "id": "IFB-013"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum line revenue where region = South",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "derive_metric",
+        "aggregate"
+      ],
+      "final_result": 75000,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "south_revenue",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 75000
+    },
+    "id": "IFB-014"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum line revenue where region = East",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "derive_metric",
+        "aggregate"
+      ],
+      "final_result": 72000,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "east_revenue",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 72000
+    },
+    "id": "IFB-015"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum line revenue where region is blank",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "derive_metric",
+        "aggregate"
+      ],
+      "final_result": 2500,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "missing_region_revenue",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 2500
+    },
+    "id": "IFB-016"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum quantity where product = Laptop",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "aggregate"
+      ],
+      "final_result": 4,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "laptop_quantity",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 4
+    },
+    "id": "IFB-017"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum quantity where category = Accessories",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "aggregate"
+      ],
+      "final_result": 23,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "accessories_quantity",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 23
+    },
+    "id": "IFB-018"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum Total Revenue where Product Name = Laptop",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "aggregate"
+      ],
+      "final_result": 118000,
+      "metadata": {
+        "dataset_snapshot": "module3_sales_direct.csv",
+        "reference_key": "direct_laptop_revenue",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 118000
+    },
+    "id": "IFB-019"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum Total Revenue where Region = North",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "aggregate"
+      ],
+      "final_result": 62200,
+      "metadata": {
+        "dataset_snapshot": "module3_sales_direct.csv",
+        "reference_key": "direct_north_revenue",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 62200
+    },
+    "id": "IFB-020"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum Total Revenue where Region = South",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "aggregate"
+      ],
+      "final_result": 1600,
+      "metadata": {
+        "dataset_snapshot": "module3_sales_direct.csv",
+        "reference_key": "direct_south_revenue",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 1600
+    },
+    "id": "IFB-021"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "count rows where order_date <= 2025-01-07",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "count"
+      ],
+      "final_result": 4,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "jan5_7_rows",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 4
+    },
+    "id": "IFB-022"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum line revenue grouped by product",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "derive_metric",
+        "group_by",
+        "aggregate"
+      ],
+      "final_result": {
+        "Headset": 16000,
+        "Keyboard": 5000,
+        "Laptop": 200000,
+        "Monitor": 30000,
+        "Mouse": 5000
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "derived_revenue_by_product",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "Headset": 16000,
+        "Keyboard": 5000,
+        "Laptop": 200000,
+        "Monitor": 30000,
+        "Mouse": 5000
+      }
+    },
+    "id": "IFB-023"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum line revenue grouped by region including blank",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "derive_metric",
+        "group_by",
+        "aggregate"
+      ],
+      "final_result": {
+        "(missing)": 2500,
+        "East": 72000,
+        "North": 106500,
+        "South": 75000
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "derived_revenue_by_region",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "(missing)": 2500,
+        "East": 72000,
+        "North": 106500,
+        "South": 75000
+      }
+    },
+    "id": "IFB-024"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum line revenue grouped by category",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "derive_metric",
+        "group_by",
+        "aggregate"
+      ],
+      "final_result": {
+        "Accessories": 26000,
+        "Electronics": 230000
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "derived_revenue_by_category",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "Accessories": 26000,
+        "Electronics": 230000
+      }
+    },
+    "id": "IFB-025"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum quantity grouped by product",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "aggregate"
+      ],
+      "final_result": {
+        "Headset": 8,
+        "Keyboard": 5,
+        "Laptop": 4,
+        "Monitor": 3,
+        "Mouse": 10
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "derived_quantity_by_product",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "Headset": 8,
+        "Keyboard": 5,
+        "Laptop": 4,
+        "Monitor": 3,
+        "Mouse": 10
+      }
+    },
+    "id": "IFB-026"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum Total Revenue grouped by Product Name",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "aggregate"
+      ],
+      "final_result": {
+        "Cable": 800,
+        "Laptop": 118000,
+        "Mouse": 3000
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales_direct.csv",
+        "reference_key": "direct_revenue_by_product",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "Cable": 800,
+        "Laptop": 118000,
+        "Mouse": 3000
+      }
+    },
+    "id": "IFB-027"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum Total Revenue grouped by Region",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "aggregate"
+      ],
+      "final_result": {
+        "East": 58000,
+        "North": 62200,
+        "South": 1600
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales_direct.csv",
+        "reference_key": "direct_revenue_by_region",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "East": 58000,
+        "North": 62200,
+        "South": 1600
+      }
+    },
+    "id": "IFB-028"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "count rows grouped by product",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "count"
+      ],
+      "final_result": {
+        "Headset": 3,
+        "Keyboard": 2,
+        "Laptop": 3,
+        "Monitor": 2,
+        "Mouse": 3
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "rows_by_product",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "Headset": 3,
+        "Keyboard": 2,
+        "Laptop": 3,
+        "Monitor": 2,
+        "Mouse": 3
+      }
+    },
+    "id": "IFB-029"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum quantity grouped by region including blank",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "aggregate"
+      ],
+      "final_result": {
+        "(missing)": 5,
+        "East": 8,
+        "North": 7,
+        "South": 10
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "quantity_by_region",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "(missing)": 5,
+        "East": 8,
+        "North": 7,
+        "South": 10
+      }
+    },
+    "id": "IFB-030"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "count rows grouped by Region",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "count"
+      ],
+      "final_result": {
+        "East": 1,
+        "North": 3,
+        "South": 2
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales_direct.csv",
+        "reference_key": "rows_by_direct_region",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "East": 1,
+        "North": 3,
+        "South": 2
+      }
+    },
+    "id": "IFB-031"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum line revenue grouped by date",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "derive_metric",
+        "group_by",
+        "aggregate"
+      ],
+      "final_result": {
+        "2025-01-05": 100500,
+        "2025-01-06": 3000,
+        "2025-01-07": 50000,
+        "2025-01-08": 22000,
+        "2025-01-09": 2000,
+        "2025-01-10": 10000,
+        "2025-01-11": 2500,
+        "2025-01-12": 50000,
+        "2025-01-13": 4000,
+        "2025-01-14": 12000
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "daily_revenue",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "2025-01-05": 100500,
+        "2025-01-06": 3000,
+        "2025-01-07": 50000,
+        "2025-01-08": 22000,
+        "2025-01-09": 2000,
+        "2025-01-10": 10000,
+        "2025-01-11": 2500,
+        "2025-01-12": 50000,
+        "2025-01-13": 4000,
+        "2025-01-14": 12000
+      }
+    },
+    "id": "IFB-032"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "rank nonblank region totals descending",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "derive_metric",
+        "aggregate",
+        "rank",
+        "top_n"
+      ],
+      "final_result": {
+        "region": "North",
+        "revenue": 106500
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "highest_region",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "region": "North",
+        "revenue": 106500
+      }
+    },
+    "id": "IFB-033"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "rank product revenue descending",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "derive_metric",
+        "aggregate",
+        "rank",
+        "top_n"
+      ],
+      "final_result": {
+        "product": "Laptop",
+        "revenue": 200000
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "highest_product",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "product": "Laptop",
+        "revenue": 200000
+      }
+    },
+    "id": "IFB-034"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sort totals descending and tied products alphabetically",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "derive_metric",
+        "aggregate",
+        "sort"
+      ],
+      "final_result": [
+        {
+          "product": "Laptop",
+          "revenue": 200000
+        },
+        {
+          "product": "Monitor",
+          "revenue": 30000
+        },
+        {
+          "product": "Headset",
+          "revenue": 16000
+        },
+        {
+          "product": "Keyboard",
+          "revenue": 5000
+        },
+        {
+          "product": "Mouse",
+          "revenue": 5000
+        }
+      ],
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "top_products",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": [
+        {
+          "product": "Laptop",
+          "revenue": 200000
+        },
+        {
+          "product": "Monitor",
+          "revenue": 30000
+        },
+        {
+          "product": "Headset",
+          "revenue": 16000
+        },
+        {
+          "product": "Keyboard",
+          "revenue": 5000
+        },
+        {
+          "product": "Mouse",
+          "revenue": 5000
+        }
+      ]
+    },
+    "id": "IFB-035"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "rank category revenue descending",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "derive_metric",
+        "aggregate",
+        "rank",
+        "top_n"
+      ],
+      "final_result": {
+        "category": "Electronics",
+        "revenue": 230000
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "highest_category",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "category": "Electronics",
+        "revenue": 230000
+      }
+    },
+    "id": "IFB-036"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "rank direct product revenue descending",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "aggregate",
+        "rank",
+        "top_n"
+      ],
+      "final_result": {
+        "product": "Laptop",
+        "revenue": 118000
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales_direct.csv",
+        "reference_key": "direct_highest_product",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "product": "Laptop",
+        "revenue": 118000
+      }
+    },
+    "id": "IFB-037"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "rank nonblank region totals ascending",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "derive_metric",
+        "aggregate",
+        "rank",
+        "bottom_n"
+      ],
+      "final_result": {
+        "region": "East",
+        "revenue": 72000
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "lowest_region",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "region": "East",
+        "revenue": 72000
+      }
+    },
+    "id": "IFB-038"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum by order id and sort descending",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "derive_metric",
+        "aggregate",
+        "sort",
+        "top_n"
+      ],
+      "final_result": [
+        {
+          "order_id": "1001",
+          "revenue": 100500
+        },
+        {
+          "order_id": "1003",
+          "revenue": 50000
+        }
+      ],
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "top_orders",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": [
+        {
+          "order_id": "1001",
+          "revenue": 100500
+        },
+        {
+          "order_id": "1003",
+          "revenue": 50000
+        }
+      ]
+    },
+    "id": "IFB-039"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "rank direct product totals ascending",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "aggregate",
+        "rank",
+        "bottom_n"
+      ],
+      "final_result": {
+        "product": "Cable",
+        "revenue": 800
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales_direct.csv",
+        "reference_key": "lowest_direct_product",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "product": "Cable",
+        "revenue": 800
+      }
+    },
+    "id": "IFB-040"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "North minus South",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "derive_metric",
+        "aggregate",
+        "calculate_difference"
+      ],
+      "final_result": 31500,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "derived_north_minus_south",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 31500
+    },
+    "id": "IFB-041"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "East minus South",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "derive_metric",
+        "aggregate",
+        "calculate_difference"
+      ],
+      "final_result": -3000,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "derived_east_minus_south",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": -3000
+    },
+    "id": "IFB-042"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "Laptop minus Monitor",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "derive_metric",
+        "aggregate",
+        "calculate_difference"
+      ],
+      "final_result": 170000,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "laptop_minus_monitor",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 170000
+    },
+    "id": "IFB-043"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "((North - South) / South) * 100",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "derive_metric",
+        "aggregate",
+        "calculate_percentage_difference"
+      ],
+      "final_result": 42,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "north_pct_over_south",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 42
+    },
+    "id": "IFB-044"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "North direct revenue minus South",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "aggregate",
+        "calculate_difference"
+      ],
+      "final_result": 60600,
+      "metadata": {
+        "dataset_snapshot": "module3_sales_direct.csv",
+        "reference_key": "direct_north_minus_south",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 60600
+    },
+    "id": "IFB-045"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "Laptop minus Mouse",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "aggregate",
+        "calculate_difference"
+      ],
+      "final_result": 115000,
+      "metadata": {
+        "dataset_snapshot": "module3_sales_direct.csv",
+        "reference_key": "direct_laptop_minus_mouse",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 115000
+    },
+    "id": "IFB-046"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "order 1001 total minus zero",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "derive_metric",
+        "aggregate",
+        "calculate_difference"
+      ],
+      "final_result": 100500,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "order1001_revenue",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 100500
+    },
+    "id": "IFB-047"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "26000 * 100 < 12 * total revenue",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "derive_metric",
+        "aggregate",
+        "compare_groups"
+      ],
+      "final_result": true,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "accessory_share_test",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": true
+    },
+    "id": "IFB-048"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum revenue on date",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "derive_metric",
+        "aggregate"
+      ],
+      "final_result": 100500,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "day_2025_01_05",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 100500
+    },
+    "id": "IFB-049"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum revenue on date",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "derive_metric",
+        "aggregate"
+      ],
+      "final_result": 12000,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "jan14_revenue",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 12000
+    },
+    "id": "IFB-050"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "group by date and select maximum",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "group_by",
+        "derive_metric",
+        "aggregate",
+        "rank",
+        "top_n"
+      ],
+      "final_result": {
+        "date": "2025-01-05",
+        "revenue": 100500
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "highest_revenue_day",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "date": "2025-01-05",
+        "revenue": 100500
+      }
+    },
+    "id": "IFB-051"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum revenue in January 2025",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "derive_metric",
+        "aggregate"
+      ],
+      "final_result": 256000,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "derived_revenue_total",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 256000
+    },
+    "id": "IFB-052"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "count distinct order_date",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "distinct_count"
+      ],
+      "final_result": 10,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "jan_days",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 10
+    },
+    "id": "IFB-053"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum revenue in inclusive date range",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "derive_metric",
+        "aggregate"
+      ],
+      "final_result": 153500,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "first_week_revenue",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 153500
+    },
+    "id": "IFB-054"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "count rows in inclusive date range",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "count"
+      ],
+      "final_result": 4,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "jan5_7_rows",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 4
+    },
+    "id": "IFB-055"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum quantity in inclusive date range",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "aggregate"
+      ],
+      "final_result": 7,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "jan5_7_qty",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 7
+    },
+    "id": "IFB-056"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "count blank region values",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "count"
+      ],
+      "final_result": 1,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "missing_region_rows",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 1
+    },
+    "id": "IFB-057"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "count blank cells",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "count"
+      ],
+      "final_result": 1,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "missing_cells_derived",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 1
+    },
+    "id": "IFB-058"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "count columns containing missing values",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "count"
+      ],
+      "final_result": 1,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "missing_columns",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 1
+    },
+    "id": "IFB-059"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "whether blank-cell count exceeds zero",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "count"
+      ],
+      "final_result": false,
+      "metadata": {
+        "dataset_snapshot": "module3_sales_direct.csv",
+        "reference_key": "direct_has_missing",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": false
+    },
+    "id": "IFB-060"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum revenue for blank-region rows",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "derive_metric",
+        "aggregate"
+      ],
+      "final_result": 2500,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "missing_region_revenue",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 2500
+    },
+    "id": "IFB-061"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "count exact duplicate rows after first",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "count"
+      ],
+      "final_result": 1,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "duplicate_rows",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 1
+    },
+    "id": "IFB-062"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "total revenue minus duplicate line amount",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "derive_metric",
+        "aggregate"
+      ],
+      "final_result": 250000,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "duplicate_adjusted_revenue",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 250000
+    },
+    "id": "IFB-063"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "count blank cells",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "count"
+      ],
+      "final_result": 0,
+      "metadata": {
+        "dataset_snapshot": "module3_sales_direct.csv",
+        "reference_key": "missing_cells_direct",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 0
+    },
+    "id": "IFB-064"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": {
+        "definition": "Average Order Value is the average amount spent each time a customer places an order. A higher AOV means customers spend more per transaction on average.",
+        "formula": "AOV = Total Revenue / Number of Orders.",
+        "name": "Average Order Value (AOV)",
+        "source": "InsightFlow AI built-in knowledge base"
+      },
+      "expected_formula": "canonical definition from committed knowledge source",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "definition": "Average Order Value is the average amount spent each time a customer places an order. A higher AOV means customers spend more per transaction on average.",
+        "formula": "AOV = Total Revenue / Number of Orders.",
+        "name": "Average Order Value (AOV)",
+        "source": "InsightFlow AI built-in knowledge base"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "definition_aov",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "definition": "Average Order Value is the average amount spent each time a customer places an order. A higher AOV means customers spend more per transaction on average.",
+        "formula": "AOV = Total Revenue / Number of Orders.",
+        "name": "Average Order Value (AOV)",
+        "source": "InsightFlow AI built-in knowledge base"
+      }
+    },
+    "id": "IFB-065"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": {
+        "definition": "Customer Acquisition Cost is the average cost of acquiring one new paying customer, including marketing and sales spend.",
+        "formula": "CAC = Total Acquisition Spend / Number of New Customers Acquired.",
+        "name": "Customer Acquisition Cost (CAC)",
+        "source": "InsightFlow AI built-in knowledge base"
+      },
+      "expected_formula": "canonical definition from committed knowledge source",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "definition": "Customer Acquisition Cost is the average cost of acquiring one new paying customer, including marketing and sales spend.",
+        "formula": "CAC = Total Acquisition Spend / Number of New Customers Acquired.",
+        "name": "Customer Acquisition Cost (CAC)",
+        "source": "InsightFlow AI built-in knowledge base"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "definition_cac",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "definition": "Customer Acquisition Cost is the average cost of acquiring one new paying customer, including marketing and sales spend.",
+        "formula": "CAC = Total Acquisition Spend / Number of New Customers Acquired.",
+        "name": "Customer Acquisition Cost (CAC)",
+        "source": "InsightFlow AI built-in knowledge base"
+      }
+    },
+    "id": "IFB-066"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": {
+        "definition": "Conversion Rate is the percentage of visitors or leads who complete a desired action, such as making a purchase.",
+        "formula": "Conversion Rate = (Conversions / Total Visitors) x 100.",
+        "name": "Conversion Rate",
+        "source": "InsightFlow AI built-in knowledge base"
+      },
+      "expected_formula": "canonical definition from committed knowledge source",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "definition": "Conversion Rate is the percentage of visitors or leads who complete a desired action, such as making a purchase.",
+        "formula": "Conversion Rate = (Conversions / Total Visitors) x 100.",
+        "name": "Conversion Rate",
+        "source": "InsightFlow AI built-in knowledge base"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "definition_conversion",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "definition": "Conversion Rate is the percentage of visitors or leads who complete a desired action, such as making a purchase.",
+        "formula": "Conversion Rate = (Conversions / Total Visitors) x 100.",
+        "name": "Conversion Rate",
+        "source": "InsightFlow AI built-in knowledge base"
+      }
+    },
+    "id": "IFB-067"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": {
+        "definition": "Churn Rate is the percentage of customers who stop doing business with a company during a given period.",
+        "formula": "Churn Rate = (Customers Lost / Customers at Start of Period) x 100.",
+        "name": "Churn Rate",
+        "source": "InsightFlow AI built-in knowledge base"
+      },
+      "expected_formula": "canonical definition from committed knowledge source",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "definition": "Churn Rate is the percentage of customers who stop doing business with a company during a given period.",
+        "formula": "Churn Rate = (Customers Lost / Customers at Start of Period) x 100.",
+        "name": "Churn Rate",
+        "source": "InsightFlow AI built-in knowledge base"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "definition_churn",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "definition": "Churn Rate is the percentage of customers who stop doing business with a company during a given period.",
+        "formula": "Churn Rate = (Customers Lost / Customers at Start of Period) x 100.",
+        "name": "Churn Rate",
+        "source": "InsightFlow AI built-in knowledge base"
+      }
+    },
+    "id": "IFB-068"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": {
+        "definition": "Retention Rate is the percentage of customers a business keeps over a given period.",
+        "formula": "Retention Rate = 100% - Churn Rate (for the same period).",
+        "name": "Retention Rate",
+        "source": "InsightFlow AI built-in knowledge base"
+      },
+      "expected_formula": "canonical definition from committed knowledge source",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "definition": "Retention Rate is the percentage of customers a business keeps over a given period.",
+        "formula": "Retention Rate = 100% - Churn Rate (for the same period).",
+        "name": "Retention Rate",
+        "source": "InsightFlow AI built-in knowledge base"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "definition_retention",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "definition": "Retention Rate is the percentage of customers a business keeps over a given period.",
+        "formula": "Retention Rate = 100% - Churn Rate (for the same period).",
+        "name": "Retention Rate",
+        "source": "InsightFlow AI built-in knowledge base"
+      }
+    },
+    "id": "IFB-069"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": {
+        "definition": "Gross Margin is the percentage of revenue remaining after subtracting the cost of goods sold (COGS).",
+        "formula": "Gross Margin = ((Revenue - COGS) / Revenue) x 100.",
+        "name": "Gross Margin",
+        "source": "InsightFlow AI built-in knowledge base"
+      },
+      "expected_formula": "canonical definition from committed knowledge source",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "definition": "Gross Margin is the percentage of revenue remaining after subtracting the cost of goods sold (COGS).",
+        "formula": "Gross Margin = ((Revenue - COGS) / Revenue) x 100.",
+        "name": "Gross Margin",
+        "source": "InsightFlow AI built-in knowledge base"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "definition_gross_margin",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "definition": "Gross Margin is the percentage of revenue remaining after subtracting the cost of goods sold (COGS).",
+        "formula": "Gross Margin = ((Revenue - COGS) / Revenue) x 100.",
+        "name": "Gross Margin",
+        "source": "InsightFlow AI built-in knowledge base"
+      }
+    },
+    "id": "IFB-070"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": {
+        "definition": "Net Profit Margin is the percentage of revenue that remains as profit after all expenses, taxes and interest are subtracted.",
+        "formula": "Net Profit Margin = (Net Profit / Revenue) x 100.",
+        "name": "Net Profit Margin",
+        "source": "InsightFlow AI built-in knowledge base"
+      },
+      "expected_formula": "canonical definition from committed knowledge source",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "definition": "Net Profit Margin is the percentage of revenue that remains as profit after all expenses, taxes and interest are subtracted.",
+        "formula": "Net Profit Margin = (Net Profit / Revenue) x 100.",
+        "name": "Net Profit Margin",
+        "source": "InsightFlow AI built-in knowledge base"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "definition_net_margin",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "definition": "Net Profit Margin is the percentage of revenue that remains as profit after all expenses, taxes and interest are subtracted.",
+        "formula": "Net Profit Margin = (Net Profit / Revenue) x 100.",
+        "name": "Net Profit Margin",
+        "source": "InsightFlow AI built-in knowledge base"
+      }
+    },
+    "id": "IFB-071"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": {
+        "definition": "Annual Recurring Revenue is the yearly value of recurring subscription revenue.",
+        "formula": "ARR = Monthly Recurring Revenue x 12.",
+        "name": "Annual Recurring Revenue (ARR)",
+        "source": "InsightFlow AI built-in knowledge base"
+      },
+      "expected_formula": "canonical definition from committed knowledge source",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "definition": "Annual Recurring Revenue is the yearly value of recurring subscription revenue.",
+        "formula": "ARR = Monthly Recurring Revenue x 12.",
+        "name": "Annual Recurring Revenue (ARR)",
+        "source": "InsightFlow AI built-in knowledge base"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "definition_arr",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "definition": "Annual Recurring Revenue is the yearly value of recurring subscription revenue.",
+        "formula": "ARR = Monthly Recurring Revenue x 12.",
+        "name": "Annual Recurring Revenue (ARR)",
+        "source": "InsightFlow AI built-in knowledge base"
+      }
+    },
+    "id": "IFB-072"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "rank nonblank region totals; top minus second",
+      "expected_intermediate_results": [
+        {
+          "step": "region_revenue",
+          "value": {
+            "(missing)": 2500,
+            "East": 72000,
+            "North": 106500,
+            "South": 75000
+          }
+        },
+        {
+          "step": "leader",
+          "value": {
+            "region": "North",
+            "revenue": 106500
+          }
+        },
+        {
+          "step": "difference",
+          "value": 34500
+        }
+      ],
+      "expected_operations": [
+        "derive_metric",
+        "group_by",
+        "aggregate",
+        "rank",
+        "top_n",
+        "calculate_difference"
+      ],
+      "final_result": {
+        "difference": 34500,
+        "leader": "North",
+        "leader_revenue": 106500,
+        "second": "East",
+        "second_revenue": 72000
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "region_lead_and_margin",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "difference": 34500,
+        "leader": "North",
+        "leader_revenue": 106500,
+        "second": "East",
+        "second_revenue": 72000
+      }
+    },
+    "id": "IFB-073"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "group and select highest",
+      "expected_intermediate_results": [
+        {
+          "step": "revenue_by_product",
+          "value": {
+            "Headset": 16000,
+            "Keyboard": 5000,
+            "Laptop": 200000,
+            "Monitor": 30000,
+            "Mouse": 5000
+          }
+        }
+      ],
+      "expected_operations": [
+        "derive_metric",
+        "group_by",
+        "aggregate",
+        "rank",
+        "top_n"
+      ],
+      "final_result": {
+        "product": "Laptop",
+        "revenue": 200000
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "highest_product",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "product": "Laptop",
+        "revenue": 200000
+      }
+    },
+    "id": "IFB-074"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum revenue and count unique orders",
+      "expected_intermediate_results": [
+        {
+          "step": "revenue",
+          "value": 256000
+        },
+        {
+          "step": "orders",
+          "value": 10
+        }
+      ],
+      "expected_operations": [
+        "derive_metric",
+        "aggregate",
+        "distinct_count"
+      ],
+      "final_result": {
+        "distinct_orders": 10,
+        "total_revenue": 256000
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "revenue_and_orders",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "distinct_orders": 10,
+        "total_revenue": 256000
+      }
+    },
+    "id": "IFB-075"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "group and compare category totals",
+      "expected_intermediate_results": [
+        {
+          "step": "revenue_by_category",
+          "value": {
+            "Accessories": 26000,
+            "Electronics": 230000
+          }
+        }
+      ],
+      "expected_operations": [
+        "derive_metric",
+        "group_by",
+        "aggregate",
+        "rank"
+      ],
+      "final_result": {
+        "leading_category": "Electronics",
+        "revenue_by_category": {
+          "Accessories": 26000,
+          "Electronics": 230000
+        }
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "category_compare",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "leading_category": "Electronics",
+        "revenue_by_category": {
+          "Accessories": 26000,
+          "Electronics": 230000
+        }
+      }
+    },
+    "id": "IFB-076"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "rank direct totals and subtract runner-up",
+      "expected_intermediate_results": [
+        {
+          "step": "revenue_by_product",
+          "value": {
+            "Cable": 800,
+            "Laptop": 118000,
+            "Mouse": 3000
+          }
+        }
+      ],
+      "expected_operations": [
+        "group_by",
+        "aggregate",
+        "rank",
+        "top_n",
+        "calculate_difference"
+      ],
+      "final_result": {
+        "difference": 115000,
+        "leader": "Laptop",
+        "leader_revenue": 118000,
+        "second": "Mouse",
+        "second_revenue": 3000
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales_direct.csv",
+        "reference_key": "direct_leader_margin",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "difference": 115000,
+        "leader": "Laptop",
+        "leader_revenue": 118000,
+        "second": "Mouse",
+        "second_revenue": 3000
+      }
+    },
+    "id": "IFB-077"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "compare twice leader revenue with total",
+      "expected_intermediate_results": [
+        {
+          "step": "leader",
+          "value": {
+            "region": "North",
+            "revenue": 106500
+          }
+        },
+        {
+          "step": "total",
+          "value": 256000
+        }
+      ],
+      "expected_operations": [
+        "derive_metric",
+        "group_by",
+        "aggregate",
+        "compare_groups"
+      ],
+      "final_result": {
+        "leader": "North",
+        "north_less_than_half_total": true
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "leader_share",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "leader": "North",
+        "north_less_than_half_total": true
+      }
+    },
+    "id": "IFB-078"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum by order, select two and sum",
+      "expected_intermediate_results": [
+        {
+          "step": "order_revenue",
+          "value": {
+            "1001": 100500,
+            "1002": 3000,
+            "1003": 50000,
+            "1004": 22000,
+            "1005": 2000,
+            "1006": 10000,
+            "1007": 2500,
+            "1008": 50000,
+            "1009": 4000,
+            "1010": 12000
+          }
+        },
+        {
+          "step": "top_two",
+          "value": [
+            {
+              "order_id": "1001",
+              "revenue": 100500
+            },
+            {
+              "order_id": "1003",
+              "revenue": 50000
+            }
+          ]
+        }
+      ],
+      "expected_operations": [
+        "derive_metric",
+        "group_by",
+        "aggregate",
+        "sort",
+        "top_n"
+      ],
+      "final_result": {
+        "combined_revenue": 150500,
+        "top_two": [
+          {
+            "order_id": "1001",
+            "revenue": 100500
+          },
+          {
+            "order_id": "1003",
+            "revenue": 50000
+          }
+        ]
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "top_orders_and_total",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "combined_revenue": 150500,
+        "top_two": [
+          {
+            "order_id": "1001",
+            "revenue": 100500
+          },
+          {
+            "order_id": "1003",
+            "revenue": 50000
+          }
+        ]
+      }
+    },
+    "id": "IFB-079"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "sum by category and date range",
+      "expected_intermediate_results": [
+        {
+          "step": "date_range",
+          "value": "2025-01-05 through 2025-01-07 inclusive"
+        },
+        {
+          "step": "category",
+          "value": "Accessories"
+        }
+      ],
+      "expected_operations": [
+        "filter_rows",
+        "derive_metric",
+        "aggregate"
+      ],
+      "final_result": 3500,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "accessories_first_week",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 3500
+    },
+    "id": "IFB-080"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "Select the maximum product revenue, then report quantity for the same product.",
+      "expected_intermediate_results": [
+        {
+          "step": "revenue_by_product",
+          "value": {
+            "Headset": 16000,
+            "Keyboard": 5000,
+            "Laptop": 200000,
+            "Monitor": 30000,
+            "Mouse": 5000
+          }
+        },
+        {
+          "step": "quantity_by_product",
+          "value": {
+            "Headset": 8,
+            "Keyboard": 5,
+            "Laptop": 4,
+            "Monitor": 3,
+            "Mouse": 10
+          }
+        }
+      ],
+      "expected_operations": [
+        "derive_metric",
+        "group_by",
+        "aggregate",
+        "rank",
+        "top_n",
+        "group_by",
+        "aggregate"
+      ],
+      "final_result": {
+        "product": "Laptop",
+        "quantity": 4,
+        "revenue": 200000
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "product_leader_with_units",
+        "reference_method": "deterministic calculation from versioned CSV"
+      },
+      "tolerance": null,
+      "value": {
+        "product": "Laptop",
+        "quantity": 4,
+        "revenue": 200000
+      }
+    },
+    "id": "IFB-081"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "count rows and sum direct revenue",
+      "expected_intermediate_results": [
+        {
+          "step": "rows",
+          "value": 6
+        },
+        {
+          "step": "revenue",
+          "value": 121800
+        }
+      ],
+      "expected_operations": [
+        "count",
+        "aggregate"
+      ],
+      "final_result": {
+        "rows": 6,
+        "total_revenue": 121800
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales_direct.csv",
+        "reference_key": "direct_rows_and_total",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "rows": 6,
+        "total_revenue": 121800
+      }
+    },
+    "id": "IFB-082"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "underspecified question requires clarification",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "detail": "Specify the performance measure, such as revenue or quantity.",
+        "status": "clarification_required"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "ambiguous_product_best",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "detail": "Specify the performance measure, such as revenue or quantity.",
+        "status": "clarification_required"
+      }
+    },
+    "id": "IFB-083"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "underspecified question requires clarification",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "detail": "Specify the regional performance measure.",
+        "status": "clarification_required"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "ambiguous_region_strongest",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "detail": "Specify the regional performance measure.",
+        "status": "clarification_required"
+      }
+    },
+    "id": "IFB-084"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "underspecified question requires clarification",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "detail": "Specify the criterion for importance.",
+        "status": "clarification_required"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "ambiguous_important_result",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "detail": "Specify the criterion for importance.",
+        "status": "clarification_required"
+      }
+    },
+    "id": "IFB-085"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "underspecified question requires clarification",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "detail": "Specify the baseline period and improvement measure.",
+        "status": "clarification_required"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "ambiguous_improvement",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "detail": "Specify the baseline period and improvement measure.",
+        "status": "clarification_required"
+      }
+    },
+    "id": "IFB-086"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "underspecified question requires clarification",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "detail": "Define what makes an order normal.",
+        "status": "clarification_required"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "ambiguous_normal_order",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "detail": "Define what makes an order normal.",
+        "status": "clarification_required"
+      }
+    },
+    "id": "IFB-087"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "underspecified question requires clarification",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "detail": "Specify the dates and outcome measure to compare.",
+        "status": "clarification_required"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "ambiguous_date_better",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "detail": "Specify the dates and outcome measure to compare.",
+        "status": "clarification_required"
+      }
+    },
+    "id": "IFB-088"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "required data or method unavailable",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "detail": "Forecasting method and future evidence are unavailable.",
+        "status": "unsupported"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "unsupported_forecast",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "detail": "Forecasting method and future evidence are unavailable.",
+        "status": "unsupported"
+      }
+    },
+    "id": "IFB-089"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "required data or method unavailable",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "detail": "Cost and expense fields are absent.",
+        "status": "unsupported"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "unsupported_profit",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "detail": "Cost and expense fields are absent.",
+        "status": "unsupported"
+      }
+    },
+    "id": "IFB-090"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "required data or method unavailable",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "detail": "Customer identity and longitudinal records are absent.",
+        "status": "unsupported"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "unsupported_retention_data",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "detail": "Customer identity and longitudinal records are absent.",
+        "status": "unsupported"
+      }
+    },
+    "id": "IFB-091"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "required data or method unavailable",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "detail": "Customer identifier is absent.",
+        "status": "unsupported"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "unsupported_order_frequency",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "detail": "Customer identifier is absent.",
+        "status": "unsupported"
+      }
+    },
+    "id": "IFB-092"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "required data or method unavailable",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "detail": "Tax rates and amounts are absent.",
+        "status": "unsupported"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "unsupported_tax",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "detail": "Tax rates and amounts are absent.",
+        "status": "unsupported"
+      }
+    },
+    "id": "IFB-093"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "required data or method unavailable",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "detail": "Inventory state is absent.",
+        "status": "unsupported"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "unsupported_inventory",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "detail": "Inventory state is absent.",
+        "status": "unsupported"
+      }
+    },
+    "id": "IFB-094"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "IDs have no additive semantics",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "aggregate"
+      ],
+      "final_result": {
+        "detail": "Order IDs have no additive measurement semantics.",
+        "status": "unsupported"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "adversarial_identifier_sum",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "detail": "Order IDs have no additive measurement semantics.",
+        "status": "unsupported"
+      }
+    },
+    "id": "IFB-095"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "count distinct IDs, not rows",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "count"
+      ],
+      "final_result": {
+        "counting_rule": "distinct order_id",
+        "distinct_orders": 10,
+        "line_item_rows": 13
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "adversarial_order_count",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "counting_rule": "distinct order_id",
+        "distinct_orders": 10,
+        "line_item_rows": 13
+      }
+    },
+    "id": "IFB-096"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "no evidence supports imputing missing region",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "detail": "No evidence supports assigning the blank region to North.",
+        "status": "unsupported"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "adversarial_missing_imputation",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "detail": "No evidence supports assigning the blank region to North.",
+        "status": "unsupported"
+      }
+    },
+    "id": "IFB-097"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "total minus duplicate line",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "filter_rows",
+        "derive_metric",
+        "aggregate"
+      ],
+      "final_result": 250000,
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "duplicate_adjusted_revenue",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": 250000
+    },
+    "id": "IFB-098"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "historical data does not establish future growth",
+      "expected_intermediate_results": [],
+      "expected_operations": [],
+      "final_result": {
+        "detail": "Historical observations do not establish future growth.",
+        "status": "unsupported"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "unsupported_causal_forecast",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "detail": "Historical observations do not establish future growth.",
+        "status": "unsupported"
+      }
+    },
+    "id": "IFB-099"
+  },
+  {
+    "ground_truth": {
+      "canonical_definition": null,
+      "expected_formula": "phone field is absent",
+      "expected_intermediate_results": [],
+      "expected_operations": [
+        "aggregate"
+      ],
+      "final_result": {
+        "detail": "No phone-number column exists.",
+        "status": "unsupported"
+      },
+      "metadata": {
+        "dataset_snapshot": "module3_sales.csv",
+        "reference_key": "unsupported_phone_sum",
+        "reference_method": "deterministic calculation from versioned CSV or committed metric source"
+      },
+      "tolerance": null,
+      "value": {
+        "detail": "No phone-number column exists.",
+        "status": "unsupported"
+      }
+    },
+    "id": "IFB-100"
+  }
+]

@@ -1,0 +1,49 @@
+{
+  "freeze_version": "1.0",
+  "status": "PRE-REGISTERED; NO EXPERIMENTS RUN",
+  "benchmark": {
+    "benchmark_id": "InsightFlow-Bench",
+    "benchmark_version": "1.0",
+    "question_count": 100,
+    "ground_truth_version": "1.0",
+    "dataset_version": "1.0",
+    "sha256": {
+      "questions.json": "9f59ae009b0f6a81b6f0d4bfc252085c663193526e72f5ab6c574ace70ee9534",
+      "ground_truth.json": "c9677f293247926f4fabf006f75819d5fcf9a2487e85b5c7d552240ce76b26d8",
+      "datasets/module3_sales.csv": "eae24ee4e675e8b99d6f0893a87c4b84717a0e2eb876a7f19654f88e46837d54",
+      "datasets/module3_sales_direct.csv": "520172097d69e40cf729714342d8d6ce7a7763670b5d13f6d673aaf1af0359cd"
+    }
+  },
+  "source_revision": {
+    "git_commit_at_freeze_review": "4893a80948490837e80e89770fbff8b892d132c8",
+    "branch": "v2-development",
+    "working_tree_was_dirty": true,
+    "note": "Commit identifies the base revision; frozen benchmark artifacts were untracked at review time. No commit/tag is created by this freeze pass."
+  },
+  "M1_numerical_accuracy": {
+    "applicability_rule": "Eligible only when ground_truth.value is a finite numeric scalar or a non-empty list/mapping whose every leaf is a finite numeric scalar. Booleans, text, mixed categorical/numeric structures, nulls, empty structures, clarification_required outcomes, and unsupported outcomes are not M1 targets.",
+    "numerator": "numerical_correct_count",
+    "denominator": "numerical_evaluated_count",
+    "excluded_count": "total_cases - numerical_evaluated_count",
+    "frozen_benchmark_applicable_cases": 57,
+    "frozen_benchmark_non_applicable_cases": 43
+  },
+  "conditions": {
+    "baseline_a": "run",
+    "baseline_b": "N/A: no frozen canonical mapping from V1 tool labels to V2.2 operation labels",
+    "baseline_c_v1": "run",
+    "system_d_full_v2": "run",
+    "A1_v2_minus_planner": "N/A: V2.3 requires an AnalysisPlan; its Supervisor does not derive an execution sequence from the question",
+    "A2_v2_minus_verification": "run",
+    "A3_v2_minus_self_correction": "run",
+    "A4_v2_minus_rag": "run",
+    "A5_v2_full": "same frozen configuration as System D; alias to the System D run, not an additional independent observation"
+  },
+  "error_injection_schedule": "error_injection_schedule_v1.0.json",
+  "statistical_procedure": {
+    "paired_binary": "McNemar's test",
+    "paired_continuous": "Wilcoxon signed-rank when assumptions and measurement structure are appropriate; otherwise descriptive paired differences with reason",
+    "multiplicity_and_effect_sizes": "Report for planned pairwise tests as frozen in Step 6",
+    "status": "Frozen before official results; no statistical analysis run"
+  }
+}

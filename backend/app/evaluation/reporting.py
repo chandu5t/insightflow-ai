@@ -79,6 +79,8 @@ def generate_markdown_report(
         "",
         "Official M3 Planning Accuracy is aggregated only from its official case-level result, which compares the observed plan with the frozen expected operation sequence where that annotation exists. No dependency graph is inferred. Dependency-evaluability and the separate operation-sequence diagnostic records are labeled diagnostic and are excluded from M3 aggregation.",
         "",
+        f"M1 Numerical Accuracy: numerator={aggregate.numerical_correct_count}; denominator={aggregate.numerical_evaluated_count}; excluded/non-applicable={aggregate.numerical_excluded_count}. Applicability rule: only finite numeric scalars or non-empty all-numeric lists/mappings are M1 targets; booleans, text, mixed categorical/numeric structures, clarification/unsupported outcomes, and targets without an applicable numerical comparison are excluded.",
+        "",
         "M4 is unavailable for Baseline B because V2.1 and Contract v1.1 define no canonical mapping from V1 tool names to V2.2 operation labels.",
         "",
         "### Stage Latencies (M9 Breakdown)",

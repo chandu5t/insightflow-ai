@@ -26,7 +26,7 @@ from app.evaluation.schemas import (
 )
 from app.multi_agent.schemas import MultiAgentRequest, MultiAgentResult
 from app.multi_agent.workflow import run_multi_agent_workflow
-from app.planner.schemas import AnalysisPlan, PlanStep, PlannerRequest
+from app.planner.schemas import AnalysisPlan, PlannerRequest
 from app.planner.service import PlannerModel, create_plan
 from app.self_correction.schemas import CorrectionRequest, CorrectionResponse
 from app.self_correction.service import correct_execution
@@ -107,6 +107,11 @@ def evaluate_single_case(
     metric_version: str = "v2.1",
 ) -> CaseEvaluationResult:
     """Execute and evaluate a single benchmark case under the specified condition."""
+    if condition == SystemCondition.ABLATION_A1_NO_PLANNER:
+        raise NotImplementedError(
+            "A1 is not executable: V2.3 requires an AnalysisPlan, and its Supervisor "
+            "does not derive an execution sequence from the question."
+        )
     settings = settings or get_settings()
     retriever = retriever or StubMetricRetriever()
     dataset_uuid = UUID(str(dataset_id))
@@ -195,29 +200,7 @@ def evaluate_single_case(
     plan_correct = None
 
     if ablation.disable_planner:
-        # A1: Bypass planner, create a single direct step
-        plan = AnalysisPlan(
-            intent="total_revenue",
-            reasoning_type="simple",
-            steps=[PlanStep(step_id="s1", operation="derive_metric", description="Direct metric", parameters={"metric": "revenue"})],
-        )
-        plan_lat = (time.perf_counter() - plan_start) * 1000
-        direct_ops = [step.operation for step in plan.steps]
-        if ground_truth.expected_operations:
-            if len(ground_truth.expected_operations) > 1:
-                case_metrics["planning_dependency_evaluability"] = "unavailable_no_dependency_ground_truth"
-            operation_sequence_correct = evaluate_planning_accuracy(direct_ops, ground_truth.expected_operations)
-            case_metrics["planning_operation_sequence_correct"] = operation_sequence_correct
-            # The frozen benchmark does not define expected dependency graphs.
-            # A single operation has no inter-step dependency to assess.
-            if not operation_sequence_correct:
-                plan_correct = False
-            else:
-                plan_correct = True
-            case_metrics["tool_selection_correct"] = evaluate_tool_selection_accuracy(
-                direct_ops if direct_ops else None, ground_truth.expected_operations
-            )
-        stage_results.append(CaseStageResult(stage_name="planner", status="skipped", latency_ms=plan_lat, output_summary="bypassed_planner"))
+        raise NotImplementedError("A1 is not executable without a frozen planner-bypass decision mechanism.")
     else:
         try:
             req = PlannerRequest(question=case_input.question)

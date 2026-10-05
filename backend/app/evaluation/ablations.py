@@ -74,7 +74,22 @@ def apply_error_injection(
                 break
 
     elif injection.error_type == "incorrect_intermediate_result":
-        # Mutate result of an agent step
+        # A pre-registered null target deterministically selects the last
+        # completed count/distinct_count result, whose verification semantics
+        # are frozen by V2.4. Resolve and retain the concrete step ID so M5
+        # can audit the exact detector target.
+        if injection.target_step_id is None:
+            eligible = [
+                agent for agent in mutated_result.agent_results
+                if agent.agent_name == "analysis"
+                and agent.status == "completed"
+                and agent.step_id in mutated_result.executed_steps
+                and agent.metadata.get("operation") in {"count", "distinct_count"}
+            ]
+            if eligible:
+                injection.target_step_id = eligible[-1].step_id
+
+        # Mutate result of the selected agent step.
         for agent in mutated_result.agent_results:
             if (agent.agent_name == "analysis" and agent.step_id == injection.target_step_id
                     and injection.injected_value is not None):

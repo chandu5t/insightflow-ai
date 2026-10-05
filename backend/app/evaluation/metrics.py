@@ -13,13 +13,29 @@ def _is_finite_number(value: Any) -> bool:
     return isinstance(value, (int, float, Decimal)) and not isinstance(value, bool) and math.isfinite(float(value))
 
 
+def is_numerical_target(value: Any) -> bool:
+    """Whether a ground-truth value is entirely a numeric M1 target.
+
+    Numeric scalars and non-empty numeric-only lists/mappings are eligible.
+    Booleans, strings, mixed categorical/numeric structures, nulls, and empty
+    containers are not M1 targets.
+    """
+    if _is_finite_number(value):
+        return True
+    if isinstance(value, dict):
+        return bool(value) and all(is_numerical_target(item) for item in value.values())
+    if isinstance(value, (list, tuple)):
+        return bool(value) and all(is_numerical_target(item) for item in value)
+    return False
+
+
 def evaluate_numerical_accuracy(
     observed: Any,
     expected: Any,
     tolerance: float | None = None,
 ) -> bool | None:
     """Evaluate M1: Numerical Accuracy under exact integer or float tolerance rules."""
-    if expected is None:
+    if not is_numerical_target(expected):
         return None
     if observed is None:
         return False
@@ -151,7 +167,9 @@ def build_case_metric_records(
     metric_values["M1"] = (
         result.numerical_correct,
         "available" if result.numerical_correct is not None else "unavailable",
-        None if result.numerical_correct is not None else "Ground truth or required numerical tolerance is unavailable.",
+        None if result.numerical_correct is not None else (
+            "Ground truth is non-numeric/mixed or a required numerical tolerance is unavailable."
+        ),
     )
     metric_values["M2"] = (result.success, "available", None)
     metric_values["M3"] = (
@@ -342,6 +360,7 @@ def aggregate_metrics(cases: Sequence[CaseEvaluationResult], metric_version: str
     # M1: Numerical Accuracy
     num_eval = sum(1 for c in cases if c.numerical_correct is not None)
     num_corr = sum(1 for c in cases if c.numerical_correct is True)
+    num_excluded = total - num_eval
     num_acc = (num_corr / num_eval) if num_eval > 0 else None
 
     # M3: Planning Accuracy
@@ -407,6 +426,7 @@ def aggregate_metrics(cases: Sequence[CaseEvaluationResult], metric_version: str
         failed_cases=failed,
         numerical_evaluated_count=num_eval,
         numerical_correct_count=num_corr,
+        numerical_excluded_count=num_excluded,
         numerical_accuracy=round(num_acc, 4) if num_acc is not None else None,
         task_success_rate=round(task_success_rate, 4),
         planning_evaluated_count=plan_eval,

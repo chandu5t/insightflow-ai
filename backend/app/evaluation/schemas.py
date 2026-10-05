@@ -259,6 +259,7 @@ class AggregateMetrics(BaseModel):
     # M1: Numerical Accuracy
     numerical_evaluated_count: int = 0
     numerical_correct_count: int = 0
+    numerical_excluded_count: int = 0
     numerical_accuracy: float | None = None
 
     # M2: Task Success Rate

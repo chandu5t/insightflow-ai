@@ -4,6 +4,7 @@ from app.evaluation.metrics import (
     aggregate_metrics,
     build_case_metric_records,
     evaluate_numerical_accuracy,
+    is_numerical_target,
     evaluate_planning_accuracy,
     evaluate_tool_selection_accuracy,
 )
@@ -42,6 +43,23 @@ def test_m1_unavailable_float_comparisons_propagate_through_nested_values():
     assert evaluate_numerical_accuracy(
         [100.25, 3], [100.0, 4]
     ) is False
+
+
+def test_m1_excludes_non_numerical_and_mixed_ground_truth_targets():
+    assert is_numerical_target(12) is True
+    assert evaluate_numerical_accuracy(12, 12) is True
+    assert is_numerical_target({"North": 12, "South": 8}) is True
+    assert evaluate_numerical_accuracy("AOV means ...", "AOV means ...") is None
+    assert evaluate_numerical_accuracy(
+        {"status": "clarification_required", "detail": "Specify a measure."},
+        {"status": "clarification_required", "detail": "Specify a measure."},
+    ) is None
+    assert evaluate_numerical_accuracy(
+        {"status": "unsupported", "detail": "No data."},
+        {"status": "unsupported", "detail": "No data."},
+    ) is None
+    assert evaluate_numerical_accuracy(False, False) is None
+    assert evaluate_numerical_accuracy({"label": "North", "value": 12}, {"label": "North", "value": 12}) is None
 
 
 def test_m3_planning_accuracy():

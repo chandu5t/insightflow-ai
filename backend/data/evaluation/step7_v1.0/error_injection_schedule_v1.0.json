@@ -1,0 +1,48 @@
+{
+  "schedule_id": "InsightFlow-Bench-v1.0-error-injection-schedule-v1.0",
+  "condition": "system_d_full_v2",
+  "schedule_frozen_before_results": true,
+  "repetition_count_per_case": 1,
+  "injection_stage": "after_v23_execution_before_v24_verification",
+  "error_type": "incorrect_intermediate_result",
+  "injected_value": -999999,
+  "target_selection_rule": "Select the last successful Analysis Agent result whose operation metadata is count or distinct_count. Record the resolved step ID. If no such result exists, the scheduled injection is not applied and is excluded from the M5 applied-injection denominator.",
+  "expected_detector_target": "V2.4 numerical_verification check for the resolved step ID",
+  "self_correction_expected_applicable": false,
+  "self_correction_reason": "The frozen V2.5 strategy only reconciles a qualifying single-step ID mismatch; it does not repair an incorrect numerical intermediate value. V2.5 must terminate safely without claiming a correction.",
+  "scheduled_cases": [
+    {
+      "case_id": "IFB-002",
+      "category": "aggregation",
+      "difficulty": "easy",
+      "expected_operations": ["count"],
+      "repetition_count": 1
+    },
+    {
+      "case_id": "IFB-012",
+      "category": "aggregation",
+      "difficulty": "easy",
+      "expected_operations": ["distinct_count"],
+      "repetition_count": 1
+    },
+    {
+      "case_id": "IFB-053",
+      "category": "time_analysis",
+      "difficulty": "medium",
+      "expected_operations": ["distinct_count"],
+      "repetition_count": 1
+    },
+    {
+      "case_id": "IFB-096",
+      "category": "adversarial_error_oriented",
+      "difficulty": "medium",
+      "expected_operations": ["count"],
+      "repetition_count": 1
+    }
+  ],
+  "denominator_rules": {
+    "M5": "Actual number of successfully applied scheduled injections, not all 100 benchmark cases.",
+    "M6": "Actual number of injected errors detected by V2.4 and presented to V2.5 for correction; preserve zero-denominator as N/A."
+  },
+  "coverage_limit": "This safe schedule covers aggregation, time analysis, and adversarial/error-oriented cases at Easy and Medium difficulty. Hard cases require operations/dependency semantics for which the current V2.3/V2.4 implementation does not provide an independently checkable numerical target; no hard case is forced into this schedule."
+}

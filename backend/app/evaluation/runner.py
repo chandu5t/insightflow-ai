@@ -11,7 +11,9 @@ from pathlib import Path
 from typing import Any, Sequence
 from uuid import UUID
 
-from app.core.config import Settings, get_settings
+from dotenv import load_dotenv
+
+from app.core.config import BACKEND_DIR, Settings, get_settings
 from app.evaluation.ablations import InjectedError
 from app.evaluation.artifacts import persist_evaluation_artifacts
 from app.evaluation.benchmark import extract_ground_truth, load_benchmark, sanitize_case_for_execution
@@ -56,6 +58,12 @@ class EvaluationRunner:
         dataset_mapping: dict[str, str | UUID] | None = None,
         error_injections: dict[str, InjectedError] | None = None,
     ) -> tuple[ExperimentManifest, AggregateMetrics, list[CaseEvaluationResult], list[ErrorRecord]]:
+        # Settings reads backend/.env through pydantic-settings, but provider
+        # SDKs may also need environment variables such as proxy configuration.
+        # Load the same project file before the first provider request without
+        # overriding values already present in the process environment.
+        load_dotenv(dotenv_path=BACKEND_DIR / ".env", override=False)
+
         if not cases:
             raise ValueError("The benchmark contains no cases to evaluate.")
         selected_set = set(self.config.case_selection or [])
