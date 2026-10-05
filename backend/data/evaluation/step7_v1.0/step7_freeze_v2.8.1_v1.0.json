@@ -1,0 +1,185 @@
+{
+  "freeze_record_version": "1.0",
+  "protocol": "InsightFlow V2.8 Step 7 with approved V2.8.1 semantic execution amendment",
+  "status": "FROZEN BEFORE V2.8.1 OFFICIAL EXPERIMENTS; NO V2.8.1 EXPERIMENTS RUN",
+  "amendment": {
+    "version": "V2.8.1",
+    "document": "docs/V2.8.1_SEMANTIC_EXECUTION_AMENDMENT.md",
+    "document_sha256": "29ec3148511b888fc6bdbe54d384b3718516b372cb439b263ad4174b7378f25e",
+    "implementation_source_git_commit": "fcff2f9f0e2e9bf3625f6bbc664cf33415b5388e",
+    "branch": "v2-development",
+    "working_tree_dirty": true,
+    "commit_interpretation": "The Git commit identifies the source base. V2.8.1 implementation changes are not committed; the following SHA-256 map fingerprints the implementation files as frozen in the working tree.",
+    "implementation_file_sha256": {
+      "backend/app/multi_agent/agents.py": "b885e85fa72096191a8ad1b71ce9dc6e2bb8eb545db821222e9bba3a0179a833",
+      "backend/app/multi_agent/schemas.py": "4cc367024d05498c9497dda019cd49dd09d22641935d73c956adb00c52b8f7d1",
+      "backend/app/planner/operations.py": "10350b194934f64f82989f684aba3c05bbf713fcdd555450bb37783f15aef83a",
+      "backend/app/planner/prompts.py": "7fa68cbbd722f6ababa9abcf7a3d7e2a40a72f9c8698a884dd608e23496cf50f",
+      "backend/app/planner/validator.py": "97226c964564495bd664ce05e62fcb89cf994eed8b10c080c31ae77380f24f71",
+      "backend/app/planner/semantic_manifest.py": "add8576a6ba6b484ae02826288582e83db005a7c5386b65bd32305b1098ffa23",
+      "backend/app/verification/service.py": "4e57d539a86d472e763feb3a08e3fe6b14763e30821435064d76958c9a0b27e3"
+    }
+  },
+  "benchmark_freeze": {
+    "benchmark_id": "InsightFlow-Bench",
+    "benchmark_version": "1.0",
+    "question_count": 100,
+    "ground_truth_version": "1.0",
+    "dataset_version": "1.0",
+    "unchanged_from": "backend/data/evaluation/step7_v1.0/step7_freeze_v1.0.json",
+    "prior_freeze_sha256": "aa2de3be1fdc57cef1cd4a610eabf72137c0b7cbcffeef1f5699050af710d7bb",
+    "sha256": {
+      "questions.json": "9f59ae009b0f6a81b6f0d4bfc252085c663193526e72f5ab6c574ace70ee9534",
+      "ground_truth.json": "c9677f293247926f4fabf006f75819d5fcf9a2487e85b5c7d552240ce76b26d8",
+      "datasets/module3_sales.csv": "eae24ee4e675e8b99d6f0893a87c4b84717a0e2eb876a7f19654f88e46837d54",
+      "datasets/module3_sales_direct.csv": "520172097d69e40cf729714342d8d6ce7a7763670b5d13f6d673aaf1af0359cd"
+    }
+  },
+  "semantic_manifests": {
+    "registry_file": "backend/app/planner/semantic_manifest.py",
+    "registry_sha256": "add8576a6ba6b484ae02826288582e83db005a7c5386b65bd32305b1098ffa23",
+    "manifest_version": "insightflow-bench-v1.0-semantic-v1",
+    "snapshot_bindings": {
+      "datasets/module3_sales.csv": {
+        "dataset_sha256": "eae24ee4e675e8b99d6f0893a87c4b84717a0e2eb876a7f19654f88e46837d54",
+        "roles": {
+          "order_id": "identifier",
+          "region": "categorical",
+          "product": "categorical",
+          "category": "categorical",
+          "order_date": "date",
+          "quantity": "additive_measure",
+          "unit_price": "non_additive_measure"
+        },
+        "approved_additive_product": ["quantity", "unit_price"]
+      },
+      "datasets/module3_sales_direct.csv": {
+        "dataset_sha256": "520172097d69e40cf729714342d8d6ce7a7763670b5d13f6d673aaf1af0359cd",
+        "roles": {
+          "Order ID": "identifier",
+          "Product Name": "categorical",
+          "Quantity": "additive_measure",
+          "Total Revenue": "additive_measure",
+          "Region": "categorical"
+        },
+        "physical_header_policy": "Exact physical CSV header strings only. No normalization, aliases, snake_case conversion, or implicit name mapping. The physical schema has no category column; category is absent from this snapshot manifest."
+      }
+    }
+  },
+  "approved_v2_8_1_operation_semantics": {
+    "filter_rows": {
+      "predicates": "Non-empty AND list; eq, ne, lt, lte, gt, gte, in, not_in, is_missing, is_not_missing. Membership requires a non-empty list; missing predicates omit value. No OR, coercion, expression strings, SQL, eval, exec, or generated code.",
+      "typing_and_missing": "Numeric comparisons require numeric semantic roles and numeric literals. Categorical, identifier, and date equality/membership are exact strings. Ordered nonnumeric and date comparisons fail/are unsupported as specified. Missing rows match only explicit missing predicates. Preserve row order.",
+      "deduplication": "Only explicit mode=exact_duplicate_rows with keep=first; compare all columns and preserve first occurrence. Never infer duplicate-removal intent."
+    },
+    "derive_metric": {
+      "grammar": "Finite numeric literal, exact column reference, declared prior-step reference, negate, or binary add/subtract/multiply/divide expression nodes only.",
+      "constraints": "Column refs equal PlanStep.inputs; step refs are declared dependencies. No functions, attributes, indexing, imports, code, arbitrary strings, or other operators. Missing/nonnumeric/nonfinite operands, division by zero, or nonfinite result fail.",
+      "lineage_and_role": "Preserve vector row alignment and record lineage. Only the manifest-authorized quantity multiplied by unit_price product in module3_sales.csv is assigned additive_measure; otherwise role remains unknown absent explicit manifest authorization. Aggregate only an additive_measure."
+    },
+    "group_by": {
+      "missing_key": "Represent missing group as (missing), do not impute values; fail if a literal (missing) key coexists with source missing values.",
+      "ordering": "Emit groups in sorted key order; preserve existing non-missing grouping behavior."
+    },
+    "aggregate": {
+      "function": "sum only, over exactly one explicit input.",
+      "eligibility": "Scalar input must be a trusted additive-measure column or additive derived series. Grouped input must be the explicit group result. Reject identifiers, non-additive/unknown roles, and untrusted snapshots.",
+      "values": "Reject missing, invalid, or nonfinite values; empty scalar/grouped input is unsupported. Emit finite scalar {kind:scalar,value:number} or sorted grouped {kind:grouped,groups:[{key,value}]}."
+    },
+    "calculate_percentage_difference": {
+      "operand_order": "Dependencies in plan order: value, then reference_value.",
+      "formula": "((value - reference_value) / reference_value) * 100",
+      "constraints": "Operands and result finite numeric scalars; zero reference fails. Units are percentage points; do not take absolute value of reference."
+    },
+    "compare_groups": {
+      "references": "Each side references a declared successful Analysis Agent dependency and selects scalar, unique group_key, explicit list_item index/field, or leader from successful rank/top_n output.",
+      "comparison": "Finite numeric multiplier per side; comparator lt/lte/eq/gte/gt; compare adjusted left_value * multiplier against adjusted right_value * multiplier. No ranking or tie resolution. Emit adjusted operands, comparator, and Boolean result structurally.",
+      "failures": "Missing, ambiguous, nonnumeric, nonfinite, or unsuccessful referenced outputs fail safely. No natural-language parsing."
+    }
+  },
+  "v2_4_verification": {
+    "independence": "Recompute applicable V2.8.1 operations from the frozen dataset, trusted manifest, validated plan, parameters, successful dependency outputs, and lineage. Do not use V2.3 executor output as expected-value computation and do not load ground truth.",
+    "numeric_tolerance": {
+      "source": "Existing V2.4 implementation; backend/app/verification/service.py ABSOLUTE_TOLERANCE",
+      "absolute": 1e-9,
+      "relative": 0.0,
+      "comparison": "math.isclose with rel_tol=0.0 and abs_tol=1e-9"
+    },
+    "other_comparisons": "Tables, filters, and groups compare structurally; Boolean results compare exactly.",
+    "outcomes": "Insufficient or undefined evidence is unsupported/verification_semantics_undefined. Deterministic mismatch is failed with numerical_mismatch or applicable structured category. Verifier exceptions return structured verification_failure; never silently pass.",
+    "evidence": "Checks include operation, evidence references, manifest version, expected and observed values, and tolerance when applicable."
+  },
+  "unchanged_research_protocol": {
+    "v2_5": "Unchanged; no eligibility, strategy, correction budget, execution, verification, or terminal behavior changes.",
+    "benchmark_questions_and_ground_truth": "Unchanged; exact hashes retained above. Ground truth is unavailable to runtime execution and V2.4 verification.",
+    "research_questions_and_hypotheses": "RQ1-RQ6 and H1-H6 unchanged per approved V2.8.1 amendment.",
+    "metrics": "M1-M10 unchanged; definitions, applicability, denominators, and N/A handling remain from frozen V2.7/V2.8 protocol.",
+    "conditions": {
+      "baseline_a": "run",
+      "baseline_b": "N/A: no frozen canonical mapping from V1 tool labels to V2.2 operation labels",
+      "baseline_c_v1": "run",
+      "system_d_full_v2": "run",
+      "A1_v2_minus_planner": "N/A: V2.3 requires validated AnalysisPlan and does not derive one without V2.2",
+      "A2_v2_minus_verification": "run",
+      "A3_v2_minus_self_correction": "run",
+      "A4_v2_minus_rag": "run",
+      "A5_v2_full": "Alias of System D; no separate observation"
+    },
+    "error_taxonomy": "E1-E15 unchanged.",
+    "error_injection_schedule": {
+      "file": "backend/data/evaluation/step7_v1.0/error_injection_schedule_v1.0.json",
+      "sha256": "3e520f22ea5bd6d251ed9a25f149722ee8ceb66e6dc271258c00bc28cee8aac0",
+      "unchanged": true
+    },
+    "statistical_procedure": {
+      "paired_binary": "McNemar's test",
+      "paired_continuous": "Wilcoxon signed-rank when assumptions and measurement structure are appropriate; otherwise descriptive paired differences with reason",
+      "multiplicity_and_effect_sizes": "Report for planned pairwise tests as frozen in Step 6",
+      "statistical_analysis_run": false
+    }
+  },
+  "prior_step7_attempts": {
+    "disposition": "DIAGNOSTIC ONLY; NOT V2.8.1 EXPERIMENTAL RESULTS; DO NOT REPORT AS PERFORMANCE EVIDENCE",
+    "condition_status_source": "backend/data/evaluation/official_runs_v1.0/condition_status_v1.0.json",
+    "condition_status_sha256": "07c2d836c44effbeee3a9984dbec81c5bcf3812a6dcb0d9f3189b1276776f95e",
+    "attempts": [
+      {
+        "run": "step7_v1_baseline_a_20261005",
+        "status": "blocked_infrastructure_failure",
+        "reason": "100 provider requests failed with ConnectError; zero successful provider responses; raw output retained as diagnostics."
+      },
+      {
+        "run": "step7_v1_baseline_a_20261005_official",
+        "status": "blocked_infrastructure_failure",
+        "reason": "100 provider requests failed with ConnectError; zero successful provider responses; raw output retained as diagnostics."
+      },
+      {
+        "run": "step7_v1_baseline_a_20261005_unsandboxed",
+        "status": "blocked_infrastructure_failure",
+        "reason": "100 provider requests failed with ConnectError; zero successful provider responses; raw output retained as diagnostics."
+      },
+      {
+        "run": "step7_baseline_a_llm_only_20261005T115246956707Z_bf972820",
+        "status": "mixed/incomplete diagnostic artifact; excluded from research reporting",
+        "reason": "Artifact records 41 completed and 59 failed cases, while the frozen condition status marks Baseline A blocked. Its aggregates are retained only to diagnose the failed attempt and are not accepted as V2.8.1 results."
+      },
+      {
+        "run_ledgers": [
+          "step7_execution_20261005T115246955708Z_ba124f26.json",
+          "step7_execution_20261005T123216607148Z_cb696377.json",
+          "step7_execution_20261005T123417379123Z_15f6ff2f.json"
+        ],
+        "status": "incomplete diagnostic ledgers; no V2.8.1 reportable results"
+      }
+    ],
+    "condition_disposition": "Baseline C, System D, A2, A3, and A4 are recorded blocked in condition_status_v1.0.json; Baseline B and A1 are N/A; A5 aliases System D; error injection is blocked until System D is executable. No statistical analysis was run."
+  },
+  "v2_8_1_run_identifiers": [],
+  "pre_run_integrity_checks": {
+    "benchmark_hashes_match_prior_freeze": true,
+    "semantic_manifest_snapshot_hashes_match_prior_freeze": true,
+    "implementation_manifest_matches_exact_direct_csv_headers": true,
+    "v2_4_tolerance_matches_implementation": true,
+    "official_experiments_run_during_freeze": false
+  }
+}

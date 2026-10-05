@@ -32,6 +32,30 @@ def build_user_prompt(request: PlannerRequest) -> str:
         "dataset_context": request.dataset_context.model_dump(mode="json") if request.dataset_context else None,
         "metric_definitions": [item.model_dump(mode="json") for item in request.metric_definitions or []],
         "registered_operations": operation_metadata_for_prompt(),
+        "v281_operation_contracts": {
+            "filter_rows": {
+                "predicate": "parameters={conditions:[{column,operator,value},...]}; conditions are AND only",
+                "operators": ["eq", "ne", "lt", "lte", "gt", "gte", "in", "not_in", "is_missing", "is_not_missing"],
+                "exact_duplicates": "parameters={mode:'exact_duplicate_rows',keep:'first'}; explicit only",
+            },
+            "derive_metric": {
+                "formula_nodes": ["{literal:number}", "{column:string}", "{step_id:string}",
+                    "{op:'negate',value:expr}", "{op:'add|subtract|multiply|divide',left:expr,right:expr}"],
+                "formula_column_references_must_equal_inputs": True,
+                "step_references_must_be_in_depends_on": True,
+            },
+            "aggregate": {"function": "sum", "inputs": "exactly one explicit additive measure"},
+            "calculate_percentage_difference": {
+                "dependencies": "[value_step, reference_value_step]",
+                "formula": "((value-reference_value)/reference_value)*100",
+            },
+            "compare_groups": {
+                "comparator": ["lt", "lte", "eq", "gte", "gt"],
+                "operand": {"step_id": "successful prior Analysis Agent step", "selector": "scalar | {kind:'group_key',key:string} | {kind:'list_item',index:integer,field:string} | {kind:'leader'}", "multiplier": "finite number"},
+                "each_operand_step_id_must_be_declared_in_depends_on": True,
+                "leader_selector": "only a successful rank or top_n output; compare_groups does not rank",
+            },
+        },
         "allowed_intents": [
             "total_revenue",
             "average_order_value",

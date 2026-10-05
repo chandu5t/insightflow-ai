@@ -75,5 +75,6 @@ class WorkflowState(TypedDict):
     errors: list[WorkflowError]
     routing_agent: NotRequired[AgentName | None]
     dataset_context: NotRequired[dict[str, Any]]
+    semantic_manifest: NotRequired[Any]
     frame: NotRequired[Any]
     final_result: NotRequired[Any]

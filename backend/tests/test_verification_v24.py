@@ -119,7 +119,7 @@ def test_invalid_result_schema_stops_downstream_checks(bad_result):
 
 
 def test_failed_status_takes_precedence_over_unsupported():
-    plan = make_plan(step("agg", "aggregate"))
+    plan = make_plan(step("agg", "aggregate", inputs=["value"], parameters={"function": "sum"}))
     raw = result_for(plan, {"agg": completed(8)}, executed=["agg", "not-planned"])
     outcome = verify_execution(plan, raw)
     assert outcome.status == "failed"
@@ -129,7 +129,7 @@ def test_failed_status_takes_precedence_over_unsupported():
 
 
 def test_unsupported_without_failure_produces_unsupported_overall():
-    plan = make_plan(step("agg", "aggregate", parameters={"function": "sum"}))
+    plan = make_plan(step("agg", "aggregate", inputs=["value"], parameters={"function": "sum"}))
     outcome = verify_execution(plan, result_for(plan, {"agg": completed(8)}))
     assert outcome.status == "unsupported"
     assert not outcome.failed_checks
@@ -177,7 +177,7 @@ def test_completed_workflow_missing_required_final_result_fails_consistency():
 
 
 def test_unsupported_step_is_not_reported_as_fully_verified():
-    plan = make_plan(step("aggregate", "aggregate", parameters={"function": "sum"}))
+    plan = make_plan(step("aggregate", "aggregate", inputs=["value"], parameters={"function": "sum"}))
     outcome = verify_execution(plan, result_for(plan, {"aggregate": completed(8)}))
     assert outcome.status == "unsupported"
     assert outcome.verified_steps == []

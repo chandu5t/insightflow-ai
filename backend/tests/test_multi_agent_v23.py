@@ -139,29 +139,30 @@ def test_count_without_column_counts_rows_and_count_column_fails_safely(tmp_path
         assert "null/value semantics" in failed.error.message
 
 
-def test_group_and_distinct_count_fail_safely_on_undefined_missing_value_semantics(tmp_path):
+def test_group_by_retains_missing_label_and_distinct_count_fails_safely(tmp_path):
     repo = MemoryRepository(tmp_path)
     workflow = V23Workflow(repo, StubMetricRetriever())
     state = workflow.initial_state(request(repo, make_plan()))
     state["frame"] = pd.DataFrame({"value": ["East", None]})
-    for operation, parameters in (("group_by", {"column": "value"}),
-                                  ("distinct_count", {"column": "value"})):
-        step = PlanStep(step_id=operation, operation=operation, description=operation,
-                        inputs=["value"], parameters=parameters)
-        result, _ = workflow.analysis_agent.run(step, state)
-        assert result.status == "failed"
-        assert "missing" in result.error.message
+    group_step = PlanStep(step_id="group_by", operation="group_by", description="group",
+                          inputs=["value"], parameters={"column": "value"})
+    grouped, groups = workflow.analysis_agent.run(group_step, state)
+    assert grouped.status == "completed" and "(missing)" in groups
+    count_step = PlanStep(step_id="distinct_count", operation="distinct_count", description="distinct",
+                          inputs=["value"], parameters={"column": "value"})
+    result, _ = workflow.analysis_agent.run(count_step, state)
+    assert result.status == "failed" and "missing" in result.error.message
 
 
-def test_aggregate_fails_when_function_vocabulary_is_not_frozen(tmp_path):
+def test_aggregate_fails_without_trusted_additive_semantics(tmp_path):
     repo = MemoryRepository(tmp_path)
     state = V23Workflow(repo, StubMetricRetriever()).initial_state(request(repo, make_plan()))
-    state["step_results"] = {"source": [1, 2]}
+    state["frame"] = pd.DataFrame({"value": ["1", "2"]})
     step = PlanStep(step_id="sum", operation="aggregate", description="sum values",
-                    parameters={"function": "sum"}, depends_on=["source"])
+                    inputs=["value"], parameters={"function": "sum"})
     result, _ = AnalysisAgent().run(step, state)
     assert result.status == "failed"
-    assert "does not freeze" in result.error.message
+    assert "trusted" in result.error.message
 
 
 @pytest.mark.parametrize(("operation", "parameters"), [
@@ -170,15 +171,18 @@ def test_aggregate_fails_when_function_vocabulary_is_not_frozen(tmp_path):
     ("calculate_percentage_difference", {}),
     ("compare_groups", {"left_group": "East", "right_group": "West"}),
 ])
-def test_underdefined_operations_return_structured_failures(tmp_path, operation, parameters):
+def test_invalid_operation_parameters_fail_and_percentage_difference_is_frozen(tmp_path, operation, parameters):
     repo = MemoryRepository(tmp_path)
     state = V23Workflow(repo, StubMetricRetriever()).initial_state(request(repo, make_plan()))
     state["step_results"] = {"left": 10, "right": 5}
     step = PlanStep(step_id="unsupported", operation=operation, description="underdefined",
                     parameters=parameters, depends_on=["left", "right"] if operation == "calculate_percentage_difference" else [])
     result, _ = AnalysisAgent().run(step, state)
-    assert result.status == "failed"
-    assert result.error.category == "agent_failure"
+    if operation == "calculate_percentage_difference":
+        assert result.status == "completed" and result.result == 100.0
+    else:
+        assert result.status == "failed"
+        assert result.error.category == "agent_failure"
 
 
 def test_rank_executes_without_ties_and_fails_when_tie_policy_is_needed(tmp_path):
@@ -230,9 +234,8 @@ def test_invalid_plan_and_agent_failure_terminate_without_retry(tmp_path):
                               parameters={"conditions": []}))
     failed = run_multi_agent_workflow(request(repo, plan), repo, StubMetricRetriever())
     assert failed.workflow_status == "failed"
-    assert failed.agent_results[-1].status == "failed"
-    assert len(failed.agent_results) == 2
-    assert failed.step_statuses == {"s1": "failed"}
+    assert failed.errors[0].category == "invalid_plan"
+    assert failed.agent_results == []
 
 
 def test_unexpected_graph_exception_returns_workflow_failure_without_retry(tmp_path, monkeypatch):

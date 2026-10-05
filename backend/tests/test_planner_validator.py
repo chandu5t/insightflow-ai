@@ -57,11 +57,13 @@ def test_schema_rejects_wrong_types_and_extra_fields():
 
 def test_valid_dependencies_and_empty_serialized_fields():
     output = plan([
-        step("s1", "derive_metric", parameters={"formula": "quantity * unit_price", "output_name": "revenue"}),
-        step("s2", "aggregate", parameters={"function": "sum"}, depends_on=["s1"]),
+        step("s1", "derive_metric", inputs=["quantity", "unit_price"], parameters={
+            "formula": {"op": "multiply", "left": {"column": "quantity"},
+                        "right": {"column": "unit_price"}}, "output_name": "revenue"}),
+        step("s2", "aggregate", inputs=["revenue"], parameters={"function": "sum"}, depends_on=["s1"]),
     ])
     assert validate_plan(output) == []
-    assert output.model_dump(mode="json")["steps"][0]["inputs"] == []
+    assert output.model_dump(mode="json")["steps"][0]["inputs"] == ["quantity", "unit_price"]
 
 
 @pytest.mark.parametrize(

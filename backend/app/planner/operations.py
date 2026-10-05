@@ -16,10 +16,10 @@ class OperationMetadata:
 
 _OPERATIONS = (
     OperationMetadata("select_columns", "Select named columns from the analytical context.", ("columns",), ("columns",), ("columns",), "table", "May precede row filtering or metric derivation."),
-    OperationMetadata("filter_rows", "Filter rows using explicit predicates.", ("table",), ("conditions",), ("conditions",), "table", "Consumes a table and may precede analytical operations."),
-    OperationMetadata("derive_metric", "Derive a named metric from supplied columns and a documented formula.", ("source_columns",), ("formula", "output_name"), ("formula", "output_name"), "metric", "Must precede operations that consume the derived metric."),
-    OperationMetadata("group_by", "Partition records by one or more grouping fields.", ("table", "grouping_column"), ("column",), ("column",), "groups", "May consume a table or a derived metric."),
-    OperationMetadata("aggregate", "Apply a supported aggregate to values.", ("values",), ("function",), ("function",), "scalar_or_grouped_values", "Consumes selected, filtered, or grouped values."),
+    OperationMetadata("filter_rows", "Filter rows using bounded predicates or explicit exact-duplicate removal.", ("table",), ("conditions", "mode", "keep"), (), "table", "Consumes a table and may precede analytical operations."),
+    OperationMetadata("derive_metric", "Derive a metric using the restricted V2.8.1 arithmetic expression tree.", ("source_columns",), ("formula", "output_name"), ("formula", "output_name"), "metric", "Must precede operations that consume the derived metric."),
+    OperationMetadata("group_by", "Partition records by a grouping field; missing values form the '(missing)' group.", ("table", "grouping_column"), ("column",), ("column",), "groups", "May consume a table or a derived metric."),
+    OperationMetadata("aggregate", "Sum only trusted additive measures; scalar and grouped sum are supported.", ("values",), ("function",), ("function",), "scalar_or_grouped_values", "Consumes selected, filtered, or grouped values."),
     OperationMetadata("sort", "Order values or groups by an explicit key and direction.", ("values",), ("by", "order"), ("by", "order"), "ordered_values", "Usually follows aggregation or grouping."),
     OperationMetadata("rank", "Assign ranks to values or groups.", ("values",), ("by", "order"), ("by", "order"), "ranked_values", "Usually follows aggregation or grouping."),
     OperationMetadata("top_n", "Select the first N items from an ordered or ranked result.", ("ordered_values",), ("n",), ("n",), "selected_values", "Consumes an ordered or ranked result."),
@@ -27,8 +27,8 @@ _OPERATIONS = (
     OperationMetadata("count", "Count rows or supplied items.", ("table_or_values",), ("column",), (), "count", "May consume a table, filtered table, or selected values."),
     OperationMetadata("distinct_count", "Count unique values in a named field.", ("table", "column"), ("column",), ("column",), "count", "Consumes a table or filtered table."),
     OperationMetadata("calculate_difference", "Calculate the difference between two supplied values.", ("left_value", "right_value"), (), (), "number", "Consumes two prior values or aggregates."),
-    OperationMetadata("calculate_percentage_difference", "Calculate percentage difference between two supplied values.", ("value", "reference_value"), (), (), "percentage", "Consumes two prior values or aggregates."),
-    OperationMetadata("compare_groups", "Compare explicitly identified groups.", ("groups",), ("left_group", "right_group"), ("left_group", "right_group"), "comparison", "Consumes grouped or ranked results."),
+    OperationMetadata("calculate_percentage_difference", "Calculate ((value-reference_value)/reference_value)*100 using two finite prior numeric values.", ("value", "reference_value"), (), (), "percentage_points", "Consumes two prior values or aggregates."),
+    OperationMetadata("compare_groups", "Compare explicit numeric values from prior step outputs.", ("left", "comparator", "right"), ("left", "comparator", "right"), ("left", "comparator", "right"), "comparison", "Consumes successful prior step outputs."),
 )
 
 OPERATION_REGISTRY: dict[str, OperationMetadata] = {operation.name: operation for operation in _OPERATIONS}

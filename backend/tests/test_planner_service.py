@@ -14,7 +14,7 @@ def generated(**overrides):
         "intent": "total_revenue",
         "reasoning_type": "simple",
         "steps": [
-            {"step_id": "step_1", "operation": "derive_metric", "description": "Derive revenue", "inputs": ["quantity", "unit_price"], "parameters": {"formula": "quantity * unit_price", "output_name": "revenue"}, "depends_on": []},
+            {"step_id": "step_1", "operation": "derive_metric", "description": "Derive revenue", "inputs": ["quantity", "unit_price"], "parameters": {"formula": {"op": "multiply", "left": {"column": "quantity"}, "right": {"column": "unit_price"}}, "output_name": "revenue"}, "depends_on": []},
             {"step_id": "step_2", "operation": "aggregate", "description": "Sum revenue", "inputs": ["step_1"], "parameters": {"function": "sum"}, "depends_on": ["step_1"]},
         ],
         "unsupported_reason": None,
