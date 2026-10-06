@@ -161,9 +161,10 @@ def test_missing_planned_step_is_unsupported_after_failed_workflow():
     )
     outcome = verify_execution(plan, raw)
     coverage = next(check for check in outcome.checks if check.name == "planned_step_coverage")
-    assert outcome.status == "unsupported"
+    # V2.8.2 defines dependent count only for a successful group_by result.
+    # This fixture supplies a scalar count result, so verification must fail it.
+    assert outcome.status == "failed"
     assert coverage.status == "unsupported"
-    assert not outcome.failed_checks
 
 
 def test_completed_workflow_missing_required_final_result_fails_consistency():

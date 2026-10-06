@@ -26,6 +26,7 @@ from app.evaluation.schemas import (
 )
 from app.multi_agent.schemas import MultiAgentRequest, MultiAgentResult
 from app.multi_agent.workflow import run_multi_agent_workflow
+from app.planner.context import build_planner_context
 from app.planner.schemas import AnalysisPlan, PlannerRequest
 from app.planner.service import PlannerModel, create_plan
 from app.self_correction.schemas import CorrectionRequest, CorrectionResponse
@@ -203,8 +204,21 @@ def evaluate_single_case(
         raise NotImplementedError("A1 is not executable without a frozen planner-bypass decision mechanism.")
     else:
         try:
-            req = PlannerRequest(question=case_input.question)
-            resp = create_plan(req, llm_client=counted_model)
+            context_bundle = build_planner_context(
+                case_input.question,
+                repository.get_csv_path(dataset_uuid),
+            )
+            req = context_bundle.request
+            authorized_definitions = (
+                context_bundle.authorized_metric_definitions
+                if req.dataset_context and req.dataset_context.manifest_version
+                else None
+            )
+            resp = create_plan(
+                req,
+                llm_client=counted_model,
+                authorized_metric_definitions=authorized_definitions,
+            )
             plan = resp.plan
             plan_lat = (time.perf_counter() - plan_start) * 1000
             plan_status = "completed" if resp.valid else "failed"
@@ -252,6 +266,27 @@ def evaluate_single_case(
             ), metric_version)
 
     case_metrics["planning_latency_ms"] = plan_lat
+
+    # A plan rejected against its trusted dataset-bound metric definition must
+    # not reach V2.3 through a validation path that lacks that registry context.
+    if not resp.valid:
+        return _with_metric_records(CaseEvaluationResult(
+            case_id=case_input.case_id,
+            condition=condition.value,
+            run_id=run_id,
+            success=False,
+            numerical_correct=evaluate_numerical_accuracy(None, ground_truth.value, tolerance),
+            plan_correct=False,
+            verification_status=None,
+            latency_ms=(time.perf_counter() - total_start) * 1000,
+            llm_calls=counted_model.call_count if counted_model else 0,
+            input_tokens=counted_model.input_tokens if counted_model else 0,
+            output_tokens=counted_model.output_tokens if counted_model else 0,
+            metrics=case_metrics,
+            errors=errors,
+            stage_results=stage_results,
+            raw_answer=None,
+        ), metric_version)
 
     # --- Stage 2: Multi-Agent Execution ---
     exec_start = time.perf_counter()

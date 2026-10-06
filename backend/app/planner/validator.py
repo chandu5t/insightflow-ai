@@ -4,7 +4,9 @@ from collections import defaultdict
 import math
 
 from app.planner.operations import OPERATION_REGISTRY
-from app.planner.schemas import AnalysisPlan, PlanValidationError
+from app.planner.date_semantics import date_predicate_errors
+from app.planner.metric_registry import REGISTERED_METRIC_KEYS
+from app.planner.schemas import AnalysisPlan, MetricDefinitionContext, PlanValidationError
 
 _FILTER_OPERATORS = {"eq", "ne", "lt", "lte", "gt", "gte", "in", "not_in", "is_missing", "is_not_missing"}
 _BINARY_EXPR = {"add", "subtract", "multiply", "divide"}
@@ -54,6 +56,14 @@ def _expression_columns(expr: object) -> set[str]:
         if key in expr:
             cols.update(_expression_columns(expr[key]))
     return cols
+
+
+def _uses_product_pair(expr: object, references: set[str]) -> bool:
+    if not isinstance(expr, dict):
+        return False
+    if expr.get("op") == "multiply" and references.issubset(_expression_columns(expr)):
+        return True
+    return any(_uses_product_pair(expr.get(key), references) for key in ("left", "right", "value"))
 
 
 def _operation_parameter_errors(step) -> list[tuple[str, str]]:
@@ -132,7 +142,12 @@ def _operation_parameter_errors(step) -> list[tuple[str, str]]:
     return errors
 
 
-def validate_plan(plan: AnalysisPlan) -> list[PlanValidationError]:
+def validate_plan(
+    plan: AnalysisPlan,
+    *,
+    authorized_metric_definitions: list[MetricDefinitionContext] | tuple[MetricDefinitionContext, ...] | None = None,
+    semantic_roles: dict[str, str] | None = None,
+) -> list[PlanValidationError]:
     errors: list[PlanValidationError] = []
     first_by_id: dict[str, int] = {}
     for index, step in enumerate(plan.steps):
@@ -168,6 +183,68 @@ def validate_plan(plan: AnalysisPlan) -> list[PlanValidationError]:
 
             for code, message in _operation_parameter_errors(step):
                 errors.append(PlanValidationError(code=code, message=message, step_id=step.step_id))
+
+            if operation.name == "filter_rows" and semantic_roles is not None:
+                conditions = step.parameters.get("conditions")
+                if isinstance(conditions, list):
+                    for code, message in date_predicate_errors(conditions, semantic_roles):
+                        errors.append(PlanValidationError(code=code, message=message, step_id=step.step_id))
+
+            if operation.name == "derive_metric" and authorized_metric_definitions is not None:
+                output_name = step.parameters.get("output_name")
+                formula = step.parameters.get("formula")
+                for definition in authorized_metric_definitions:
+                    references = set(definition.exact_column_references)
+                    if (
+                        definition.output_semantic_role == "additive_measure"
+                        and len(references) > 1
+                        and _uses_product_pair(formula, references)
+                    ):
+                        if output_name != definition.metric_key or formula != definition.allowed_expression:
+                            errors.append(PlanValidationError(
+                                code="UNAUTHORIZED_METRIC_EXPRESSION",
+                                message="A registered additive metric product must use its exact authorized expression and metric key.",
+                                step_id=step.step_id,
+                            ))
+                if output_name in REGISTERED_METRIC_KEYS:
+                    authorized = next((item for item in authorized_metric_definitions if item.metric_key == output_name), None)
+                    if authorized is None:
+                        errors.append(PlanValidationError(
+                            code="UNAUTHORIZED_METRIC_EXPRESSION",
+                            message="A registered metric cannot be derived without its trusted dataset-bound definition.",
+                            step_id=step.step_id,
+                        ))
+                    elif formula != authorized.allowed_expression:
+                        errors.append(PlanValidationError(
+                            code="UNAUTHORIZED_METRIC_EXPRESSION",
+                            message="The derived metric expression does not exactly match its trusted registry definition.",
+                            step_id=step.step_id,
+                            ))
+
+        if step.operation == "count" and step.depends_on:
+            if len(step.depends_on) != 1:
+                errors.append(PlanValidationError(
+                    code="INVALID_GROUPED_COUNT_DEPENDENCY",
+                    message="Grouped count requires exactly one group_by dependency.",
+                    step_id=step.step_id,
+                ))
+            else:
+                dependency = next(
+                    (item for item in plan.steps if item.step_id == step.depends_on[0]),
+                    None,
+                )
+                if dependency is None or dependency.operation != "group_by":
+                    errors.append(PlanValidationError(
+                        code="INVALID_GROUPED_COUNT_DEPENDENCY",
+                        message="Grouped count must depend on a group_by step.",
+                        step_id=step.step_id,
+                    ))
+            if "column" in step.parameters:
+                errors.append(PlanValidationError(
+                    code="UNSUPPORTED_COUNT_COLUMN",
+                    message="Grouped count counts source rows and does not define count(column).",
+                    step_id=step.step_id,
+                ))
 
         for dependency in step.depends_on:
             if dependency == step.step_id:

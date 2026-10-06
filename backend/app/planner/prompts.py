@@ -37,6 +37,17 @@ def build_user_prompt(request: PlannerRequest) -> str:
                 "predicate": "parameters={conditions:[{column,operator,value},...]}; conditions are AND only",
                 "operators": ["eq", "ne", "lt", "lte", "gt", "gte", "in", "not_in", "is_missing", "is_not_missing"],
                 "exact_duplicates": "parameters={mode:'exact_duplicate_rows',keep:'first'}; explicit only",
+                "trusted_date_rules": {
+                    "eligibility": "Ordered date predicates require the exact physical column to have trusted semantic role date.",
+                    "format": "Date literals and non-missing values use strict YYYY-MM-DD calendar dates.",
+                    "on": "eq with exact calendar-date equality",
+                    "before": "lte (inclusive)",
+                    "after": "gte (inclusive)",
+                    "inclusive_range": "gte lower AND lte upper",
+                    "calendar_month": "gte first day of month AND lt first day of next month",
+                    "missing": "Only is_missing/is_not_missing explicitly select missing values; ordered predicates do not match missing dates.",
+                    "prohibited": ["timestamps", "timezone conversion", "locale parsing", "trimming", "implicit coercion", "new operators"],
+                },
             },
             "derive_metric": {
                 "formula_nodes": ["{literal:number}", "{column:string}", "{step_id:string}",

@@ -1,10 +1,12 @@
 """HTTP integration tests for the additive V2.2 planner endpoint."""
 
 import json
+from pathlib import Path
 
 from app.api.planner_routes import get_planner_model
 from app.core.config import Settings
 from app.main import app
+from app.planner.context import build_planner_context
 
 
 class ApiPlanner:
@@ -60,13 +62,34 @@ def test_plan_endpoint_supplies_caller_context_and_rejects_bad_requests(make_cli
     }))
     client = make_client()
     app.dependency_overrides[get_planner_model] = lambda: model
+    direct_path = Path(__file__).parents[1] / "data" / "evaluation" / "insightflow_bench_v1.0" / "datasets" / "module3_sales_direct.csv"
+    trusted_context = build_planner_context("Forecast next quarter", direct_path).request
     response = client.post("/analysis/plan", json={
-        "question": "Forecast next quarter", "dataset_context": {"columns": ["revenue"]},
-        "metric_definitions": [{"name": "revenue", "definition": "Provided by caller"}],
+        "question": "Forecast next quarter",
+        "dataset_context": trusted_context.dataset_context.model_dump(mode="json"),
+        "metric_definitions": [item.model_dump(mode="json") for item in trusted_context.metric_definitions],
     })
     assert response.status_code == 200 and response.json()["valid"] is True
-    assert '"name":"revenue"' in model.user_prompts[0]
+    assert '"exact_column_references":["Total Revenue"]' in model.user_prompts[0]
     assert client.post("/analysis/plan", json={}).status_code == 422
+
+
+def test_plan_endpoint_rejects_unregistered_metric_definition(make_client):
+    model = ApiPlanner(json.dumps({
+        "intent": "unsupported_analysis", "reasoning_type": "unsupported", "steps": [],
+        "unsupported_reason": "No registered definition was supplied.",
+    }))
+    client = make_client()
+    app.dependency_overrides[get_planner_model] = lambda: model
+    response = client.post("/analysis/plan", json={
+        "question": "What is revenue?",
+        "dataset_context": {"columns": ["Revenue"], "semantic_roles": {"Revenue": "additive_measure"}},
+        "metric_definitions": [{"name": "revenue", "display_name": "Revenue",
+                               "definition": "Invented by the caller"}],
+    })
+    assert response.status_code == 422
+    assert response.json()["code"] == "VALIDATION_ERROR"
+    assert model.calls == 0
 
 
 def test_plan_endpoint_reports_provider_failure_as_5xx(make_client):

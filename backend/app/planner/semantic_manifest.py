@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import hashlib
+import csv
 from dataclasses import dataclass
 from pathlib import Path
+import re
 from typing import Literal
 
 SemanticRole = Literal[
@@ -55,6 +57,12 @@ _MANIFESTS: dict[str, DatasetSemanticManifest] = {
 }
 
 
+def semantic_manifest_for_snapshot(dataset_sha256: str) -> DatasetSemanticManifest | None:
+    """Return the application-reviewed manifest bound to a snapshot hash."""
+    manifest = _MANIFESTS.get(dataset_sha256)
+    return manifest
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as source:
@@ -63,12 +71,56 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def validate_semantic_manifest(
+    manifest: DatasetSemanticManifest,
+    *,
+    dataset_sha256: str,
+    physical_columns: list[str] | tuple[str, ...],
+) -> bool:
+    """Validate a reviewed manifest against exact snapshot bytes and CSV headers."""
+    if (
+        not isinstance(manifest.manifest_version, str)
+        or not manifest.manifest_version
+        or not isinstance(manifest.dataset_sha256, str)
+        or not re.fullmatch(r"[0-9a-f]{64}", manifest.dataset_sha256)
+        or not isinstance(dataset_sha256, str)
+    ):
+        return False
+    if dataset_sha256 != manifest.dataset_sha256:
+        return False
+    if any(not isinstance(column, str) or not column for column in physical_columns):
+        return False
+    if len(physical_columns) != len(set(physical_columns)):
+        return False
+    if set(manifest.columns) != set(physical_columns):
+        return False
+    if any(role not in ALLOWED_ROLES for role in manifest.columns.values()):
+        return False
+    for pair in manifest.additive_products:
+        if not isinstance(pair, tuple) or len(pair) != 2:
+            return False
+        left, right = pair
+        if not isinstance(left, str) or not isinstance(right, str):
+            return False
+        if left not in manifest.columns or right not in manifest.columns:
+            return False
+        if manifest.columns[left] != "additive_measure":
+            return False
+        if manifest.columns[right] not in {"additive_measure", "non_additive_measure"}:
+            return False
+    return True
+
+
 def load_semantic_manifest(path: Path) -> DatasetSemanticManifest | None:
     """Load only a code-reviewed manifest bound to the exact file snapshot."""
     snapshot_hash = sha256_file(path)
     manifest = _MANIFESTS.get(snapshot_hash)
-    if manifest is None or manifest.dataset_sha256 != snapshot_hash:
+    if manifest is None:
         return None
-    if not manifest.manifest_version or any(role not in ALLOWED_ROLES for role in manifest.columns.values()):
+    with path.open("r", encoding="utf-8", newline="") as source:
+        physical_columns = next(csv.reader(source), None)
+    if not physical_columns or not validate_semantic_manifest(
+        manifest, dataset_sha256=snapshot_hash, physical_columns=physical_columns
+    ):
         return None
     return manifest

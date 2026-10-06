@@ -82,14 +82,16 @@ def test_analysis_agent_executes_supported_operations_and_rejects_undefined_sema
     state = workflow.initial_state(request(repo, make_plan()))
     _, updates = workflow.data_agent.run(state)
     state.update(updates)
-    select = PlanStep(step_id="s1", operation="select_columns", description="select", parameters={"columns": ["value"]})
-    first, raw = workflow.analysis_agent.run(select, state)
+    group = PlanStep(step_id="s1", operation="group_by", description="group", inputs=["value"],
+                     parameters={"column": "value"})
+    first, raw = workflow.analysis_agent.run(group, state)
     assert first.status == "completed"
-    assert list(raw.columns) == ["value"]
     state["step_results"] = {"s1": raw}
-    count = PlanStep(step_id="s2", operation="count", description="count", inputs=["rows"], depends_on=["s1"])
+    state["agent_outputs"] = [first]
+    count = PlanStep(step_id="s2", operation="count", description="count", depends_on=["s1"])
     second, result = workflow.analysis_agent.run(count, state)
-    assert second.status == "completed" and result == 2
+    assert second.status == "completed"
+    assert result == {"kind": "grouped_count", "groups": [{"key": "10", "value": 1}, {"key": "20", "value": 1}]}
     unsafe = PlanStep(step_id="s3", operation="derive_metric", description="formula", parameters={
         "formula": "__import__('os').system('whoami')", "output_name": "bad"})
     rejected, _ = workflow.analysis_agent.run(unsafe, state)
@@ -214,14 +216,17 @@ def test_knowledge_agent_uses_injected_retriever():
 def test_supervisor_runs_sequentially_and_records_results(tmp_path):
     repo = MemoryRepository(tmp_path)
     plan = make_plan(
-        PlanStep(step_id="s1", operation="select_columns", description="select", parameters={"columns": ["value"]}),
-        PlanStep(step_id="s2", operation="count", description="count", inputs=["s1"], depends_on=["s1"]),
+        PlanStep(step_id="s1", operation="group_by", description="group", inputs=["region"],
+                 parameters={"column": "region"}),
+        PlanStep(step_id="s2", operation="count", description="count", depends_on=["s1"]),
     )
     result = run_multi_agent_workflow(request(repo, plan), repo, StubMetricRetriever())
     assert result.workflow_status == "completed"
     assert result.executed_steps == ["s1", "s2"]
     assert [item.agent_name for item in result.agent_results] == ["data_understanding", "analysis", "analysis"]
-    assert result.final_result == 2
+    assert result.final_result == {
+        "kind": "grouped_count", "groups": [{"key": "East", "value": 1}, {"key": "West", "value": 1}]
+    }
 
 
 def test_invalid_plan_and_agent_failure_terminate_without_retry(tmp_path):

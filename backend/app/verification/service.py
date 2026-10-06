@@ -12,6 +12,13 @@ from pydantic import ValidationError
 
 from app.core.errors import AppError
 from app.multi_agent.schemas import AgentResult, MultiAgentResult
+from app.planner.metric_registry import (
+    REGISTERED_METRIC_KEYS,
+    METRIC_REGISTRY_VERSION,
+    metric_definition_for_key,
+    validate_metric_definition,
+)
+from app.planner.date_semantics import InvalidDateValue, parse_strict_date
 from app.planner.schemas import AnalysisPlan
 from app.planner.validator import validate_plan
 from app.services.dataset_repository import DatasetRepository
@@ -31,6 +38,10 @@ _NUMERIC_UNSUPPORTED = {
 _NON_NUMERIC_OPERATIONS = {"select_columns", "group_by", "sort", "top_n", "bottom_n"}
 _V281_OPERATIONS = {"filter_rows", "derive_metric", "group_by", "aggregate",
                     "calculate_percentage_difference", "compare_groups"}
+
+
+class VerificationMismatch(ValueError):
+    """Structured evidence contradicts the frozen plan/registry semantics."""
 
 
 def _check(
@@ -480,15 +491,162 @@ def _expected_lineage(step, agent: AgentResult, result: MultiAgentResult) -> lis
     return []
 
 
+def _independent_filter_rows(step, frame: pd.DataFrame, manifest) -> pd.DataFrame:
+    """Apply frozen filter semantics to verifier-owned table data."""
+    parameters = step.parameters
+    if parameters.get("mode", "predicate") == "exact_duplicate_rows":
+        return frame.drop_duplicates(keep="first").copy()
+
+    conditions = parameters.get("conditions")
+    if not isinstance(conditions, list) or not conditions:
+        raise VerificationMismatch("filter_rows has no valid predicate list")
+    mask = pd.Series(True, index=frame.index)
+    for condition in conditions:
+        column = condition.get("column")
+        operator = condition.get("operator")
+        if not isinstance(column, str) or column not in frame.columns:
+            raise VerificationMismatch("filter predicate references an unavailable column")
+        series = frame[column]
+        missing = series.isna()
+        role = manifest.role_for(column) if manifest else "unknown"
+        left = series
+        if role == "date":
+            try:
+                left = pd.Series(
+                    [None if absent else parse_strict_date(value)
+                     for value, absent in zip(series.tolist(), missing.tolist())],
+                    index=series.index,
+                    dtype="object",
+                )
+            except InvalidDateValue as exc:
+                raise VerificationMismatch("date filter source violates strict YYYY-MM-DD semantics") from exc
+        if operator == "is_missing":
+            selected = missing
+        elif operator == "is_not_missing":
+            selected = ~missing
+        else:
+            valid = ~missing
+            literal = condition.get("value")
+            if role == "date":
+                try:
+                    right = ([parse_strict_date(item) for item in literal]
+                             if isinstance(literal, list) else parse_strict_date(literal))
+                except InvalidDateValue as exc:
+                    raise VerificationMismatch("date filter evidence violates strict YYYY-MM-DD semantics") from exc
+            elif role in {"additive_measure", "non_additive_measure"}:
+                left = pd.to_numeric(series, errors="coerce")
+                if left[valid].isna().any() or not np.isfinite(left[valid].to_numpy(dtype=float)).all():
+                    raise VerificationMismatch("numeric filter source contains invalid values")
+                if isinstance(literal, list):
+                    if not all(isinstance(item, (int, float)) and not isinstance(item, bool) for item in literal):
+                        raise VerificationMismatch("numeric filter membership literal is invalid")
+                    right = [float(item) for item in literal]
+                else:
+                    if not isinstance(literal, (int, float)) or isinstance(literal, bool):
+                        raise VerificationMismatch("numeric filter literal is invalid")
+                    right = float(literal)
+            else:
+                left = series
+                if isinstance(literal, list):
+                    if not all(isinstance(item, str) for item in literal):
+                        raise VerificationMismatch("string filter membership literal is invalid")
+                    right = literal
+                else:
+                    if not isinstance(literal, str):
+                        raise VerificationMismatch("string filter literal is invalid")
+                    right = literal
+
+            if operator in {"eq", "in"}:
+                selected = left.isin(right if isinstance(right, list) else [right])
+            elif operator in {"ne", "not_in"}:
+                selected = ~left.isin(right if isinstance(right, list) else [right])
+            elif operator in {"lt", "lte", "gt", "gte"}:
+                if role not in {"additive_measure", "non_additive_measure", "date"}:
+                    raise VerificationMismatch("ordered filtering is unsupported for this semantic role")
+                selected = {"lt": left < right, "lte": left <= right,
+                            "gt": left > right, "gte": left >= right}[operator]
+            else:
+                raise VerificationMismatch("filter operator is not supported by independent verification")
+            selected &= valid
+        mask &= selected.fillna(False)
+    return frame.loc[mask].copy()
+
+
+def _independent_table_input(
+    step,
+    result: MultiAgentResult,
+    plan_by_id: dict[str, Any],
+    by_step: dict[str, AgentResult],
+    dataset_frame: pd.DataFrame,
+    manifest,
+    visiting: set[str] | None = None,
+) -> pd.DataFrame:
+    """Rebuild a table step's input from the dataset and validated plan, never agent values."""
+    visiting = set() if visiting is None else visiting
+    if step.step_id in visiting:
+        raise VerificationMismatch("table dependency cycle prevents independent verification")
+    visiting.add(step.step_id)
+
+    if len(step.depends_on) > 1:
+        raise VerificationMismatch("table operation has ambiguous multiple dependencies")
+    if not step.depends_on:
+        return dataset_frame.copy()
+
+    dependency_id = step.depends_on[0]
+    dependency_step = plan_by_id.get(dependency_id)
+    dependency_agent = by_step.get(dependency_id)
+    if (
+        dependency_step is None
+        or dependency_agent is None
+        or dependency_agent.status != "completed"
+        or dependency_id not in result.executed_steps
+        or result.step_statuses.get(dependency_id) != "completed"
+        or dependency_agent.metadata.get("operation") != dependency_step.operation
+    ):
+        raise VerificationMismatch("table dependency is missing, unsuccessful, or inconsistent")
+
+    parent_input = _independent_table_input(
+        dependency_step, result, plan_by_id, by_step, dataset_frame, manifest, visiting
+    )
+    operation = dependency_step.operation
+    if operation == "select_columns":
+        columns = dependency_step.inputs or dependency_step.parameters.get("columns")
+        if (not isinstance(columns, list) or not columns
+                or any(column not in parent_input.columns for column in columns)):
+            raise VerificationMismatch("select_columns dependency is invalid")
+        if dependency_step.inputs and dependency_step.parameters.get("columns") and list(
+            dependency_step.parameters["columns"]
+        ) != dependency_step.inputs:
+            raise VerificationMismatch("select_columns inputs disagree with its parameters")
+        return parent_input.loc[:, columns].copy()
+    if operation == "filter_rows":
+        return _independent_filter_rows(dependency_step, parent_input, manifest)
+    if operation == "sort":
+        column = dependency_step.parameters.get("by")
+        order = dependency_step.parameters.get("order")
+        if (not isinstance(column, str) or column not in parent_input.columns
+                or order not in {"asc", "desc"} or parent_input[column].isna().any()
+                or (dependency_step.inputs and column not in dependency_step.inputs)):
+            raise VerificationMismatch("sort dependency cannot be independently reproduced")
+        return parent_input.sort_values(by=column, ascending=order == "asc", kind="stable")
+    if operation in {"top_n", "bottom_n"}:
+        count = dependency_step.parameters.get("n")
+        if isinstance(count, bool) or not isinstance(count, int) or count < 1:
+            raise VerificationMismatch("top/bottom dependency has an invalid n")
+        return (parent_input.head(count) if operation == "top_n" else parent_input.tail(count)).copy()
+    raise VerificationMismatch("upstream dependency does not produce a verifiable table")
+
+
 def _v281_expected(step, result: MultiAgentResult, frame: pd.DataFrame,
-                   manifest, by_step: dict[str, AgentResult]) -> tuple[Any, Any, list[str]]:
+                   manifest, by_step: dict[str, AgentResult], *,
+                   independent_table_input: pd.DataFrame | None = None) -> tuple[Any, Any, list[str]]:
     """Independent reference calculations for the V2.8.1 operation subset."""
     p, op = step.parameters, step.operation
     dependencies = [by_step.get(step_id) for step_id in step.depends_on]
     if any(agent is None or agent.status != "completed" for agent in dependencies):
         raise ValueError("successful dependency evidence is unavailable")
-    source_frame = frame
-    if dependencies and step.operation in {"filter_rows", "derive_metric", "group_by"}:
+    source_frame = independent_table_input.copy() if independent_table_input is not None else frame
+    if independent_table_input is None and dependencies and step.operation in {"filter_rows", "derive_metric", "group_by"}:
         table_agent = next((agent for agent in dependencies if isinstance(agent.result, dict)
                             and isinstance(agent.result.get("columns"), list)
                             and isinstance(agent.result.get("rows"), list)), None)
@@ -498,58 +656,7 @@ def _v281_expected(step, result: MultiAgentResult, frame: pd.DataFrame,
         elif step.operation != "derive_metric":
             raise ValueError("table dependency does not expose structured columns and rows")
     if op == "filter_rows":
-        selected = source_frame.copy()
-        if p.get("mode", "predicate") == "exact_duplicate_rows":
-            expected = _frame_json(selected.drop_duplicates(keep="first"))
-        else:
-            mask = pd.Series(True, index=selected.index)
-            for cond in p["conditions"]:
-                col, operator = cond["column"], cond["operator"]
-                if col not in selected.columns:
-                    raise ValueError("filter column is absent")
-                series = selected[col]
-                missing = series.isna()
-                if operator == "is_missing":
-                    current = missing
-                elif operator == "is_not_missing":
-                    current = ~missing
-                else:
-                    valid = ~missing
-                    role = manifest.role_for(col) if manifest else "unknown"
-                    literal = cond["value"]
-                    if role in {"additive_measure", "non_additive_measure"}:
-                        left = pd.to_numeric(series, errors="coerce")
-                        if left[valid].isna().any() or not np.isfinite(left[valid].to_numpy(dtype=float)).all():
-                            raise ValueError("filter numeric source is invalid")
-                        if isinstance(literal, list) and not all(
-                            isinstance(x, (int, float)) and not isinstance(x, bool) for x in literal
-                        ):
-                            raise ValueError("filter numeric membership values have invalid types")
-                        if not isinstance(literal, list) and (
-                            not isinstance(literal, (int, float)) or isinstance(literal, bool)
-                        ):
-                            raise ValueError("filter numeric literal has invalid type")
-                        right = [float(x) for x in literal] if isinstance(literal, list) else float(literal)
-                    else:
-                        left, right = series, literal
-                        if isinstance(literal, list) and not all(isinstance(x, str) for x in literal):
-                            raise ValueError("filter string membership values have invalid types")
-                        if not isinstance(literal, (str, list)):
-                            raise ValueError("filter string literal has invalid type")
-                        if role == "date" and operator in {"lt", "lte", "gt", "gte"}:
-                            raise ValueError("date ordering is not frozen")
-                        if operator in {"lt", "lte", "gt", "gte"}:
-                            raise ValueError("ordered string predicates are unsupported")
-                    if operator in {"eq", "in"}:
-                        current = left.isin(right if isinstance(right, list) else [right])
-                    elif operator in {"ne", "not_in"}:
-                        current = ~left.isin(right if isinstance(right, list) else [right])
-                    else:
-                        current = {"lt": left < right, "lte": left <= right,
-                                   "gt": left > right, "gte": left >= right}[operator]
-                    current &= valid
-                mask &= current.fillna(False)
-            expected = _frame_json(selected.loc[mask])
+        expected = _frame_json(_independent_filter_rows(step, source_frame, manifest))
         return expected, "dataset_snapshot+plan+semantic_manifest", []
     if op == "group_by":
         col = p["column"]
@@ -563,8 +670,29 @@ def _v281_expected(step, result: MultiAgentResult, frame: pd.DataFrame,
         expected = {str(key): _frame_json(group) for key, group in keyed.groupby(col, sort=True, dropna=False)}
         return expected, "dataset_snapshot+plan", []
     if op == "derive_metric":
-        expected, role = _reference_expression(p["formula"], source_frame, manifest.columns if manifest else {}, by_step)
-        if _approved_additive_product(p["formula"], manifest):
+        formula = p["formula"]
+        metric_key = p.get("output_name")
+        if metric_key in REGISTERED_METRIC_KEYS:
+            definition = metric_definition_for_key(
+                manifest.dataset_sha256 if manifest is not None else "",
+                metric_key,
+            )
+            if (
+                manifest is None
+                or definition is None
+                or not validate_metric_definition(
+                    definition,
+                    dataset_sha256=manifest.dataset_sha256,
+                    manifest=manifest,
+                    physical_columns=list(source_frame.columns),
+                )
+            ):
+                raise ValueError("trusted metric registry evidence is unavailable or mismatched")
+            if formula != definition.allowed_expression:
+                raise VerificationMismatch("the executed metric expression differs from its registry binding")
+            formula = definition.allowed_expression
+        expected, role = _reference_expression(formula, source_frame, manifest.columns if manifest else {}, by_step)
+        if _approved_additive_product(formula, manifest):
             role = "additive_measure"
         if isinstance(expected, pd.Series):
             expected = expected.tolist()
@@ -636,6 +764,7 @@ def _v281_expected(step, result: MultiAgentResult, frame: pd.DataFrame,
 def _semantic_operation_checks(plan: AnalysisPlan, result: MultiAgentResult,
                                repository: DatasetRepository | None, dataset_id: Any) -> list[VerificationCheck]:
     by_step = _agent_step_index(result)
+    plan_by_id = {step.step_id: step for step in plan.steps}
     frame: pd.DataFrame | None = None
     manifest = None
     checks: list[VerificationCheck] = []
@@ -663,9 +792,34 @@ def _semantic_operation_checks(plan: AnalysisPlan, result: MultiAgentResult,
                     raise ValueError("execution and verification semantic manifest versions differ")
                 if execution_context.metadata.get("dataset_sha256") != digest:
                     raise ValueError("execution and verification dataset snapshot hashes differ")
+            independent_table_input = None
+            if step.operation in {"filter_rows", "group_by"}:
+                independent_table_input = _independent_table_input(
+                    step, result, plan_by_id, by_step,
+                    frame if frame is not None else pd.DataFrame(), manifest,
+                )
             expected, source, dependency_ids = _v281_expected(
-                step, result, frame if frame is not None else pd.DataFrame(), manifest, by_step
+                step, result, frame if frame is not None else pd.DataFrame(), manifest, by_step,
+                independent_table_input=independent_table_input,
             )
+            metric_evidence: dict[str, Any] = {}
+            if step.operation == "derive_metric" and step.parameters.get("output_name") in REGISTERED_METRIC_KEYS:
+                metric = metric_definition_for_key(
+                    manifest.dataset_sha256 if manifest is not None else "",
+                    step.parameters["output_name"],
+                )
+                if metric is None or manifest is None:
+                    raise ValueError("trusted metric registry evidence is unavailable")
+                metric_evidence = {
+                    "metric_registry_version": METRIC_REGISTRY_VERSION,
+                    "metric_definition_version": metric.definition_version,
+                    "metric_key": metric.metric_key,
+                    "metric_dataset_sha256": metric.dataset_sha256,
+                    "metric_source_reference": metric.source_reference,
+                    "metric_column_references": metric.exact_column_references,
+                    "metric_allowed_expression": metric.allowed_expression,
+                    "metric_output_semantic_role": metric.output_semantic_role,
+                }
             if step.operation == "aggregate" and agent.metadata.get("semantic_role") != "additive_measure":
                 raise ValueError("aggregate output is not marked as an additive measure")
             if step.operation == "calculate_percentage_difference" and agent.metadata.get("semantic_role") != "non_additive_measure":
@@ -696,7 +850,18 @@ def _semantic_operation_checks(plan: AnalysisPlan, result: MultiAgentResult,
                 evidence_reference=(f"dataset:{dataset_id};" if step.operation in {"filter_rows", "derive_metric", "group_by", "aggregate"} else "")
                     + f"agent_results:{','.join(dependency_ids + [step.step_id])}",
                 metadata={"operation": step.operation, "semantic_manifest_version": getattr(manifest, "manifest_version", None),
-                          "evidence_source": source, "absolute_tolerance": ABSOLUTE_TOLERANCE},
+                          "evidence_source": source, "absolute_tolerance": ABSOLUTE_TOLERANCE,
+                          **metric_evidence},
+            ))
+        except VerificationMismatch as exc:
+            checks.append(_check(
+                "semantic_operation_verification", "failed",
+                "The executed metric does not match its authoritative registry definition.",
+                category="consistency_violation", step_ids=[step.step_id],
+                expected=step.parameters.get("formula"),
+                observed=by_step[step.step_id].metadata.get("lineage"),
+                evidence_reference=f"agent_results:{step.step_id}",
+                metadata={"operation": step.operation, "reason": type(exc).__name__},
             ))
         except (ValueError, AppError) as exc:
             checks.append(_check(
@@ -715,6 +880,143 @@ def _semantic_operation_checks(plan: AnalysisPlan, result: MultiAgentResult,
                 metadata={"operation": step.operation, "exception_type": type(exc).__name__},
             ))
     return checks
+
+
+def _grouped_count_check(
+    step,
+    result: MultiAgentResult,
+    plan_by_id: dict[str, Any],
+    by_step: dict[str, AgentResult],
+    repository: DatasetRepository | None,
+    dataset_id: Any,
+) -> VerificationCheck:
+    observed_agent = by_step.get(step.step_id)
+    observed = observed_agent.result if observed_agent is not None else None
+
+    def failed(message: str, *, expected: Any = None, metadata: dict[str, Any] | None = None):
+        return _check(
+            "numerical_verification", "failed", message,
+            category="consistency_violation", step_ids=[*step.depends_on, step.step_id],
+            expected=expected, observed=observed,
+            evidence_reference=f"agent_results:{','.join([*step.depends_on, step.step_id])}",
+            metadata={"operation": "count", "count_semantics": "grouped_source_row_count", **(metadata or {})},
+        )
+
+    def unsupported(message: str, *, metadata: dict[str, Any] | None = None):
+        return _check(
+            "numerical_verification", "unsupported", message,
+            category="verification_semantics_undefined", step_ids=[*step.depends_on, step.step_id],
+            observed=observed,
+            evidence_reference=f"agent_results:{','.join([*step.depends_on, step.step_id])}",
+            metadata={"operation": "count", "count_semantics": "grouped_source_row_count", **(metadata or {})},
+        )
+
+    if len(step.depends_on) != 1:
+        return failed("Grouped count does not declare exactly one dependency.")
+    dependency_id = step.depends_on[0]
+    group_step = plan_by_id.get(dependency_id)
+    group_agent = by_step.get(dependency_id)
+    if group_step is None or group_step.operation != "group_by":
+        return failed("Grouped count dependency is not the referenced group_by plan step.")
+    if (group_agent is None or group_agent.status != "completed"
+            or dependency_id not in result.executed_steps
+            or result.step_statuses.get(dependency_id) != "completed"):
+        return failed("Grouped count dependency did not complete successfully.")
+    if group_agent.metadata.get("operation") != "group_by":
+        return failed("Grouped count dependency operation metadata is inconsistent.")
+    group_result = group_agent.result
+    if not isinstance(group_result, dict) or any(
+        not isinstance(key, str)
+        or not isinstance(value, dict)
+        or not isinstance(value.get("columns"), list)
+        or not isinstance(value.get("rows"), list)
+        for key, value in group_result.items()
+    ):
+        return failed("Grouped count dependency did not expose a structured group result.")
+    if repository is None or dataset_id is None:
+        return unsupported("Independent dataset evidence for grouped count is unavailable.")
+    try:
+        path = repository.get_csv_path(dataset_id)
+        frame = load_dataframe(path)
+        manifest = load_semantic_manifest(path)
+    except AppError as exc:
+        return unsupported("Independent dataset evidence for grouped count is unavailable.",
+                           metadata={"dataset_error": exc.code.value})
+    if manifest is None:
+        return unsupported("A trusted dataset semantic manifest is unavailable for grouped count.")
+    data_agent = next((item for item in result.agent_results
+                       if item.agent_name == "data_understanding" and item.status == "completed"), None)
+    if data_agent is None:
+        return unsupported("Successful dataset-understanding evidence for grouped count is unavailable.")
+    if (data_agent.metadata.get("semantic_manifest_version") != manifest.manifest_version
+            or data_agent.metadata.get("dataset_sha256") != manifest.dataset_sha256):
+        return unsupported("Execution dataset metadata does not match the independent trusted snapshot.")
+    column = group_step.parameters.get("column")
+    if (not isinstance(column, str) or column not in frame.columns
+            or column not in manifest.columns):
+        return unsupported("The trusted grouping column is unavailable for independent grouped-count verification.")
+
+    try:
+        group_input = _independent_table_input(
+            group_step, result, plan_by_id, by_step, frame, manifest
+        )
+    except VerificationMismatch as exc:
+        return failed("The successful group_by input cannot be independently reconstructed.",
+                      metadata={"reason": str(exc)})
+    if column not in group_input.columns:
+        return failed("The group_by input does not contain its declared grouping column.")
+
+    missing = group_input[column].isna()
+    if missing.any() and group_input.loc[~missing, column].astype(str).eq("(missing)").any():
+        return failed("The grouping source collides with the reserved missing-group label.")
+    keyed = group_input.copy()
+    keyed[column] = keyed[column].where(~missing, "(missing)")
+    expected_groups = [
+        {"key": str(key), "value": int(len(group))}
+        for key, group in keyed.groupby(column, dropna=False, sort=True)
+    ]
+    if set(group_result) != {item["key"] for item in expected_groups}:
+        return failed("The completed group_by dependency does not match independent dataset grouping.",
+                      expected=expected_groups)
+
+    expected = {"kind": "grouped_count", "groups": expected_groups}
+    lineage = observed_agent.metadata.get("lineage") if observed_agent is not None else None
+    if (observed_agent is None or observed_agent.metadata.get("operation") != "count"
+            or lineage != [{"kind": "step", "step_id": dependency_id}]):
+        return failed("Grouped-count operation metadata or dependency lineage is inconsistent.", expected=expected)
+    valid_observed = (
+        isinstance(observed, dict)
+        and set(observed) == {"kind", "groups"}
+        and observed.get("kind") == "grouped_count"
+        and isinstance(observed.get("groups"), list)
+        and all(
+            isinstance(group, dict)
+            and set(group) == {"key", "value"}
+            and isinstance(group.get("key"), str)
+            and isinstance(group.get("value"), int)
+            and not isinstance(group.get("value"), bool)
+            and group["value"] >= 0
+            for group in observed["groups"]
+        )
+    )
+    passed = valid_observed and observed == expected
+    return _check(
+        "numerical_verification", "passed" if passed else "failed",
+        "Grouped row counts match independent recomputation from the group_by plan input." if passed
+        else "Grouped row-count structure or values differ from independent recomputation.",
+        category=None if passed else "numerical_mismatch",
+        step_ids=[dependency_id, step.step_id], expected=expected, observed=observed,
+        evidence_reference=f"dataset:{dataset_id};agent_results:{dependency_id},{step.step_id}",
+        metadata={
+            "operation": "count",
+            "count_semantics": "grouped_source_row_count",
+            "grouping_column": column,
+            "semantic_manifest_version": manifest.manifest_version,
+            "dependency_step_id": dependency_id,
+            "group_input_dependencies": group_step.depends_on,
+            "evidence_source": "dataset_snapshot+independently_recomputed_dependency_chain",
+        },
+    )
 
 
 def _numeric_checks(
@@ -737,6 +1039,11 @@ def _numeric_checks(
             continue
         operation = step.operation
         if operation in _V281_OPERATIONS:
+            continue
+        if operation == "count" and step.depends_on:
+            checks.append(_grouped_count_check(
+                step, result, plan_by_id, by_step, repository, dataset_id
+            ))
             continue
         if operation in _NON_NUMERIC_OPERATIONS:
             continue

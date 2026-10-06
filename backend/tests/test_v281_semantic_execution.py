@@ -270,9 +270,9 @@ def test_v24_independently_verifies_filter_and_derived_metric(tmp_path, monkeypa
 
     formula = {"op": "multiply", "left": {"column": "quantity"}, "right": {"column": "unit_price"}}
     derived_step = step("derive", "derive_metric", inputs=["quantity", "unit_price"],
-        parameters={"formula": formula, "output_name": "revenue"})
+        parameters={"formula": formula, "output_name": "computed_metric"})
     derived_agent = AgentResult(agent_name="analysis", step_id="derive", status="completed", result=[10.0, 21.0],
-        metadata={"operation": "derive_metric", "semantic_role": "additive_measure", "output_name": "revenue",
+              metadata={"operation": "derive_metric", "semantic_role": "additive_measure", "output_name": "computed_metric",
                   "lineage": [{"kind": "column", "name": "quantity"}, {"kind": "column", "name": "unit_price"}]})
     plan = AnalysisPlan(intent="total_revenue", reasoning_type="simple", steps=[derived_step])
     raw.update({"executed_steps": ["derive"], "step_statuses": {"derive": "completed"},

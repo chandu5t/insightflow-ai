@@ -9,6 +9,7 @@ from app.multi_agent.routing import AGENT_REGISTRY, agent_for_operation
 from app.multi_agent.schemas import (
     AgentResult, MultiAgentRequest, MultiAgentResult, WorkflowError, WorkflowState,
 )
+from app.planner.metric_registry import resolve_metric_definitions
 from app.planner.validator import validate_plan
 from app.services.dataset_repository import DatasetRepository
 from app.services.metric_retriever import MetricRetriever
@@ -46,6 +47,28 @@ class V23Workflow:
         result, updates = self.data_agent.run(state)
         if result.status == "failed":
             return {**updates, "agent_outputs": [result], "errors": [result.error], "workflow_status": "failed"}
+        manifest = updates.get("semantic_manifest")
+        semantic_roles = manifest.columns if manifest is not None else {}
+        frame = updates.get("frame")
+        physical_columns = list(frame.columns) if frame is not None else []
+        metric_definitions = resolve_metric_definitions(
+            dataset_sha256=manifest.dataset_sha256 if manifest is not None else "",
+            manifest=manifest,
+            physical_columns=physical_columns,
+        )
+        validation_errors = validate_plan(
+            state["analysis_plan"],
+            semantic_roles=semantic_roles,
+            authorized_metric_definitions=metric_definitions,
+        )
+        if validation_errors:
+            errors = [WorkflowError(
+                category="invalid_plan",
+                code=item.code,
+                message=item.message,
+                step_id=item.step_id,
+            ) for item in validation_errors]
+            return {**updates, "agent_outputs": [result], "errors": errors, "workflow_status": "failed"}
         return {**updates, "agent_outputs": [result], "workflow_status": "running"}
 
     def supervisor(self, state: WorkflowState) -> dict[str, Any]:

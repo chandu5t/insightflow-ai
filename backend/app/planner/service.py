@@ -11,8 +11,9 @@ from pydantic import ValidationError
 from app.core.config import Settings
 from app.core.errors import AppError, ErrorCode
 from app.planner.normalizer import normalize_plan_payload
+from app.planner.metric_registry import validate_authoritative_planner_context
 from app.planner.prompts import SYSTEM_PROMPT, build_user_prompt
-from app.planner.schemas import AnalysisPlan, PlannerRequest, PlannerResponse, PlannerMetadata
+from app.planner.schemas import AnalysisPlan, MetricDefinitionContext, PlannerRequest, PlannerResponse, PlannerMetadata
 from app.planner.validator import validate_plan
 from app.services.gemini_client import GeminiNotConfiguredError, GeminiRequestError
 
@@ -40,11 +41,36 @@ def create_plan(
     request: PlannerRequest,
     *,
     llm_client: PlannerModel,
+    authorized_metric_definitions: list[MetricDefinitionContext] | tuple[MetricDefinitionContext, ...] | None = None,
 ) -> PlannerResponse:
     request_id = str(uuid.uuid4())
     started = time.perf_counter()
     retry_used = False
     failure_category: str | None = None
+    context_has_trusted_semantics = bool(
+        request.dataset_context
+        and (
+            request.dataset_context.manifest_version
+            or any(role != "unknown" for role in request.dataset_context.semantic_roles.values())
+        )
+    )
+    if (request.metric_definitions or context_has_trusted_semantics) and authorized_metric_definitions is None:
+        raise ValueError("Semantic planner context must be validated against the application-owned registry before planning.")
+    if authorized_metric_definitions is not None:
+        request_definitions = request.metric_definitions or []
+        context = request.dataset_context
+        if (
+            list(authorized_metric_definitions) != request_definitions
+            or context is None
+            or not validate_authoritative_planner_context(
+                dataset_sha256=context.dataset_sha256,
+                manifest_version=context.manifest_version,
+                columns=context.columns,
+                semantic_roles=context.semantic_roles,
+                definitions=authorized_metric_definitions,
+            )
+        ):
+            raise ValueError("Planner metric context must exactly match its validated registry entries.")
     prompt = build_user_prompt(request)
 
     for attempt in range(2):
@@ -82,7 +108,15 @@ def create_plan(
             raise AppError(ErrorCode.PLAN_SCHEMA_ERROR, "The planner did not return a usable structured plan.", 502,
                            {"failure_category": failure_category, "request_id": request_id}) from exc
 
-        validation_errors = validate_plan(plan)
+        validation_errors = validate_plan(
+            plan,
+            authorized_metric_definitions=authorized_metric_definitions,
+            semantic_roles=(
+                request.dataset_context.semantic_roles
+                if request.dataset_context is not None
+                else {}
+            ),
+        )
         latency = (time.perf_counter() - started) * 1000
         valid = not validation_errors
         response = PlannerResponse(

@@ -9,6 +9,11 @@ import pandas as pd
 
 from app.multi_agent.schemas import AgentResult, WorkflowError, WorkflowState
 from app.planner.operations import OPERATION_REGISTRY
+from app.planner.date_semantics import (
+    InvalidDateValue,
+    date_predicate_errors,
+    parse_strict_date,
+)
 from app.services.dataset_repository import DatasetRepository
 from app.services.metric_retriever import MetricRetriever
 from app.utils.dataframe_utils import load_dataframe
@@ -206,13 +211,31 @@ def execute_operation(step, state: WorkflowState) -> Any:
             if params.get("keep") != "first":
                 raise OperationFailure("Exact duplicate removal supports keep='first' only.")
             return frame.drop_duplicates(keep="first").copy()
+        conditions = params["conditions"]
+        manifest = state.get("semantic_manifest")
+        semantic_roles = manifest.columns if manifest is not None else {}
+        date_errors = date_predicate_errors(conditions, semantic_roles)
+        if date_errors:
+            raise OperationFailure(date_errors[0][1])
+
         mask = pd.Series(True, index=frame.index)
-        for condition in params["conditions"]:
+        for condition in conditions:
             name, operator = condition["column"], condition["operator"]
             if name not in frame:
                 raise OperationFailure("Predicate references an unknown column.")
             series = frame[name]
             missing = series.isna()
+            role = _role(state, name)
+            left = series
+            if role == "date":
+                try:
+                    date_values = [
+                        None if is_missing else parse_strict_date(value)
+                        for value, is_missing in zip(series.tolist(), missing.tolist())
+                    ]
+                except InvalidDateValue as exc:
+                    raise OperationFailure(str(exc)) from exc
+                left = pd.Series(date_values, index=series.index, dtype="object")
             if operator == "is_missing":
                 selected = missing
             elif operator == "is_not_missing":
@@ -220,9 +243,17 @@ def execute_operation(step, state: WorkflowState) -> Any:
             else:
                 valid = ~missing
                 literal = condition["value"]
-                role = _role(state, name)
-                if role in {"additive_measure", "non_additive_measure"}:
-                    numeric_literal = (isinstance(literal, (int, float)) and not isinstance(literal, bool))
+                if role == "date":
+                    try:
+                        right = (
+                            [parse_strict_date(item) for item in literal]
+                            if isinstance(literal, list)
+                            else parse_strict_date(literal)
+                        )
+                    except InvalidDateValue as exc:
+                        raise OperationFailure(str(exc)) from exc
+                elif role in {"additive_measure", "non_additive_measure"}:
+                    numeric_literal = isinstance(literal, (int, float)) and not isinstance(literal, bool)
                     numeric_list = isinstance(literal, list) and all(
                         isinstance(item, (int, float)) and not isinstance(item, bool) for item in literal
                     )
@@ -241,16 +272,14 @@ def execute_operation(step, state: WorkflowState) -> Any:
                         valid_literal = isinstance(literal, str)
                     if not valid_literal:
                         raise OperationFailure("Predicate literal type does not match the column role.")
-                    if role == "date" and operator in {"lt", "lte", "gt", "gte"}:
-                        raise OperationFailure("Ordered date predicates are unsupported without a frozen date format.")
                     right, left = literal, series
                 if operator in {"eq", "in"}:
                     selected = left.isin(right if isinstance(right, list) else [right])
                 elif operator in {"ne", "not_in"}:
                     selected = ~left.isin(right if isinstance(right, list) else [right])
                 else:
-                    if role not in {"additive_measure", "non_additive_measure"}:
-                        raise OperationFailure("Ordered predicates require a trusted numeric column role.")
+                    if role not in {"additive_measure", "non_additive_measure", "date"}:
+                        raise OperationFailure("Ordered predicates require a trusted numeric or date column role.")
                     selected = {"lt": left < right, "lte": left <= right, "gt": left > right, "gte": left >= right}[operator]
                 selected &= valid
             mask &= selected.fillna(False)
@@ -390,6 +419,31 @@ def execute_operation(step, state: WorkflowState) -> Any:
     if operation == "count":
         if "column" in params:
             raise OperationFailure("V2.2 does not define count(column) null/value semantics.")
+        if step.depends_on:
+            if len(step.depends_on) != 1:
+                raise OperationFailure("Grouped count requires exactly one group_by dependency.")
+            dependency_id = step.depends_on[0]
+            upstream = _successful_step_agent(state, dependency_id)
+            if upstream is None or upstream.metadata.get("operation") != "group_by":
+                raise OperationFailure("Grouped count requires a successfully completed group_by dependency.")
+            grouped = values[0]
+            if not isinstance(grouped, dict) or any(
+                not isinstance(key, str) or not isinstance(group, pd.DataFrame)
+                for key, group in grouped.items()
+            ):
+                raise OperationFailure("Grouped count dependency did not produce a valid group mapping.")
+            output = {
+                "kind": "grouped_count",
+                "groups": [
+                    {"key": key, "value": int(len(group))}
+                    for key, group in grouped.items()
+                ],
+            }
+            return OperationOutput(
+                output,
+                "unknown",
+                [{"kind": "step", "step_id": dependency_id}],
+            )
         if step.inputs and not values:
             raise OperationFailure("Named count inputs are not executable values without a prior-step dependency.")
         if values:
