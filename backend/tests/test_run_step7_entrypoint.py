@@ -25,6 +25,9 @@ def test_step7_entrypoint_builds_official_configs_without_live_services():
     assert config.evaluation_configuration["development_fixture"] is False
     assert config.evaluation_configuration["retriever_mode"] == "knowledge_base"
     assert config.evaluation_configuration["dataset_mapping"] == repository.dataset_mapping
+    assert config.evaluation_configuration["frozen_benchmark_sha256"] == freeze["benchmark"]["sha256"]
+    assert freeze["benchmark"]["hash_representation"] == "canonical_lf_bytes"
+    assert freeze["benchmark"]["hash_manifest_version"] == "insightflow-bench-canonical-lf-v1.0"
 
 
 def test_step7_entrypoint_loads_only_the_frozen_four_case_injections():

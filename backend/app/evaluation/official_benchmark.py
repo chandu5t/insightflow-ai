@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -22,7 +23,16 @@ BENCHMARK_VERSION = "1.0"
 EXPECTED_CASE_COUNT = 100
 BENCHMARK_DIRECTORY = Path(__file__).resolve().parents[2] / "data" / "evaluation" / "insightflow_bench_v1.0"
 STEP7_FREEZE_PATH = BENCHMARK_DIRECTORY.parent / "step7_v1.0" / "step7_freeze_v1.0.json"
+CANONICAL_HASH_MANIFEST_PATH = (
+    BENCHMARK_DIRECTORY.parent / "step7_v1.0" / "artifact_hashes_v2.8.2_v1.0.json"
+)
 OFFICIAL_DATASETS = ("module3_sales.csv", "module3_sales_direct.csv")
+CANONICAL_ARTIFACT_KEYS = frozenset({
+    "questions.json",
+    "ground_truth.json",
+    "datasets/module3_sales.csv",
+    "datasets/module3_sales_direct.csv",
+})
 
 
 class BenchmarkValidationErrorV28(ValueError):
@@ -69,24 +79,61 @@ class OfficialBenchmarkDatasetRepository:
 
 
 def verify_official_benchmark_hashes() -> dict[str, Any]:
-    """Verify benchmark, ground-truth, and dataset files against the Step 7 freeze."""
+    """Verify exact canonical LF bytes and overlay hashes on the legacy protocol freeze."""
     try:
         freeze = json.loads(STEP7_FREEZE_PATH.read_text(encoding="utf-8"))
-        expected_hashes = freeze["benchmark"]["sha256"]
+        manifest_bytes = CANONICAL_HASH_MANIFEST_PATH.read_bytes()
+        hash_manifest = json.loads(manifest_bytes.decode("utf-8"))
     except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
         raise BenchmarkValidationErrorV28("The Step 7 freeze artifact is unavailable or malformed.") from exc
-    for relative_path, expected in expected_hashes.items():
-        path = BENCHMARK_DIRECTORY / relative_path
+
+    if (
+        not isinstance(hash_manifest, dict)
+        or hash_manifest.get("manifest_version") != "insightflow-bench-canonical-lf-v1.0"
+        or hash_manifest.get("hash_algorithm") != "SHA-256"
+        or hash_manifest.get("hash_representation") != "canonical_lf_bytes"
+        or hash_manifest.get("hash_input") != "Exact artifact bytes; LF line endings only; any CR byte is invalid."
+        or not isinstance(hash_manifest.get("artifacts"), dict)
+        or set(hash_manifest["artifacts"]) != CANONICAL_ARTIFACT_KEYS
+    ):
+        raise BenchmarkValidationErrorV28("The canonical artifact hash manifest is malformed.")
+
+    expected_hashes: dict[str, str] = {}
+    for relative_path, entry in hash_manifest["artifacts"].items():
+        if (
+            not isinstance(entry, dict)
+            or set(entry) != {"path", "sha256"}
+            or entry["path"] != relative_path
+            or not isinstance(entry["sha256"], str)
+            or not re.fullmatch(r"[0-9a-f]{64}", entry["sha256"])
+        ):
+            raise BenchmarkValidationErrorV28("The canonical artifact hash manifest is malformed.")
+        expected = entry["sha256"]
+        path = BENCHMARK_DIRECTORY / entry["path"]
         try:
-            actual = hashlib.sha256(path.read_bytes()).hexdigest()
+            artifact_bytes = path.read_bytes()
         except OSError as exc:
             raise BenchmarkValidationErrorV28(
                 f"Frozen benchmark artifact '{relative_path}' is unavailable."
             ) from exc
+        if b"\r" in artifact_bytes:
+            raise BenchmarkValidationErrorV28(
+                f"Frozen benchmark artifact '{relative_path}' is not canonical LF data."
+            )
+        actual = hashlib.sha256(artifact_bytes).hexdigest()
         if actual != expected:
             raise BenchmarkValidationErrorV28(
                 f"Frozen benchmark artifact '{relative_path}' does not match the Step 7 hash."
             )
+
+        expected_hashes[relative_path] = expected
+
+    # Preserve the original pre-registered protocol fields while making the
+    # V2.8.2 canonical byte-hash authority explicit to all existing callers.
+    freeze["benchmark"]["sha256"] = expected_hashes
+    freeze["benchmark"]["hash_representation"] = hash_manifest["hash_representation"]
+    freeze["benchmark"]["hash_manifest_version"] = hash_manifest["manifest_version"]
+    freeze["benchmark"]["hash_manifest_sha256"] = hashlib.sha256(manifest_bytes).hexdigest()
     return freeze
 
 

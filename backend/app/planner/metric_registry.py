@@ -23,13 +23,13 @@ class MetricRegistryError(ValueError):
 # questions, answers, or observed evaluation results.
 _REGISTRY: dict[tuple[str, str], MetricDefinitionContext] = {
     (
-        "eae24ee4e675e8b99d6f0893a87c4b84717a0e2eb876a7f19654f88e46837d54",
+        "677847de4659edd0da00411ee20d7d1eeaf7e2e6dab922bdf66681e682e93061",
         "revenue",
     ): MetricDefinitionContext(
         display_name="Revenue",
         metric_key="revenue",
         definition_version="revenue-v1",
-        dataset_sha256="eae24ee4e675e8b99d6f0893a87c4b84717a0e2eb876a7f19654f88e46837d54",
+        dataset_sha256="677847de4659edd0da00411ee20d7d1eeaf7e2e6dab922bdf66681e682e93061",
         manifest_version="insightflow-bench-v1.0-semantic-v1",
         exact_column_references=["quantity", "unit_price"],
         allowed_expression={
@@ -41,13 +41,13 @@ _REGISTRY: dict[tuple[str, str], MetricDefinitionContext] = {
         source_reference="backend/app/tools/revenue.py#Rules-1-2;sha256:f9bfdeea5fbd4ddd15961a53ecf76c929fd9688c7903c026bf4b2cc772fb5f63",
     ),
     (
-        "520172097d69e40cf729714342d8d6ce7a7763670b5d13f6d673aaf1af0359cd",
+        "76256f36b1440fd9d5a5e2ba9832ff89b621ba33cdf8442b36978ab85a139ced",
         "revenue",
     ): MetricDefinitionContext(
         display_name="Revenue",
         metric_key="revenue",
         definition_version="revenue-v1",
-        dataset_sha256="520172097d69e40cf729714342d8d6ce7a7763670b5d13f6d673aaf1af0359cd",
+        dataset_sha256="76256f36b1440fd9d5a5e2ba9832ff89b621ba33cdf8442b36978ab85a139ced",
         manifest_version="insightflow-bench-v1.0-semantic-v1",
         exact_column_references=["Total Revenue"],
         allowed_expression={"column": "Total Revenue"},

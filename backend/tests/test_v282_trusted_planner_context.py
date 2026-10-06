@@ -52,6 +52,17 @@ def test_manifest_resolves_exact_sales_and_direct_snapshots_and_roles():
     assert direct.role_for("total_revenue") == "unknown"
 
 
+def test_canonical_lf_dataset_hashes_resolve_manifest_and_metric_registry():
+    sales_hash = sha256_file(SALES)
+    direct_hash = sha256_file(DIRECT)
+    assert sales_hash == "677847de4659edd0da00411ee20d7d1eeaf7e2e6dab922bdf66681e682e93061"
+    assert direct_hash == "76256f36b1440fd9d5a5e2ba9832ff89b621ba33cdf8442b36978ab85a139ced"
+    assert load_semantic_manifest(SALES).dataset_sha256 == sales_hash
+    assert load_semantic_manifest(DIRECT).dataset_sha256 == direct_hash
+    assert metric_definition_for_key(sales_hash, "revenue").dataset_sha256 == sales_hash
+    assert metric_definition_for_key(direct_hash, "revenue").dataset_sha256 == direct_hash
+
+
 def test_manifest_validation_rejects_hash_column_and_role_mismatches():
     manifest = load_semantic_manifest(SALES)
     assert manifest is not None

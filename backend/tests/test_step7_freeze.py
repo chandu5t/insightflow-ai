@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import shutil
 from pathlib import Path
 from uuid import UUID
 
@@ -10,7 +11,12 @@ import pytest
 from app.evaluation.ablations import InjectedError, apply_error_injection
 from app.evaluation.benchmark import extract_ground_truth
 from app.evaluation.metrics import aggregate_metrics, evaluate_numerical_accuracy, is_numerical_target
-from app.evaluation.official_benchmark import load_official_benchmark
+from app.evaluation import official_benchmark
+from app.evaluation.official_benchmark import (
+    BenchmarkValidationErrorV28,
+    load_official_benchmark,
+    verify_official_benchmark_hashes,
+)
 from app.evaluation.schemas import CaseEvaluationResult, EvaluatorInput, GroundTruth, SystemCondition
 from app.evaluation.service import evaluate_single_case
 from app.multi_agent.schemas import AgentResult, MultiAgentResult
@@ -46,14 +52,79 @@ def test_frozen_benchmark_m1_denominator_is_reproducible():
 
 
 def test_step7_freeze_hashes_and_m1_counts_match_approved_snapshot():
-    freeze = json.loads((STEP7_DIR / "step7_freeze_v1.0.json").read_text(encoding="utf-8"))
+    freeze = verify_official_benchmark_hashes()
     bench_dir = ROOT / "data" / "evaluation" / "insightflow_bench_v1.0"
     for relative_path, expected_hash in freeze["benchmark"]["sha256"].items():
-        digest = hashlib.sha256((bench_dir / relative_path).read_bytes()).hexdigest()
+        artifact = (bench_dir / relative_path).read_bytes()
+        assert b"\r" not in artifact
+        digest = hashlib.sha256(artifact).hexdigest()
         assert digest == expected_hash
+    assert freeze["benchmark"]["hash_representation"] == "canonical_lf_bytes"
+    assert freeze["benchmark"]["hash_manifest_version"] == "insightflow-bench-canonical-lf-v1.0"
     assert freeze["benchmark"]["question_count"] == len(load_official_benchmark()) == 100
     assert freeze["M1_numerical_accuracy"]["frozen_benchmark_applicable_cases"] == 57
     assert freeze["M1_numerical_accuracy"]["frozen_benchmark_non_applicable_cases"] == 43
+
+
+def test_canonical_lf_hash_manifest_has_exact_artifact_map():
+    manifest_path = STEP7_DIR / "artifact_hashes_v2.8.2_v1.0.json"
+    manifest_bytes = manifest_path.read_bytes()
+    manifest = json.loads(manifest_bytes.decode("utf-8"))
+    assert manifest["manifest_version"] == "insightflow-bench-canonical-lf-v1.0"
+    assert manifest["hash_algorithm"] == "SHA-256"
+    assert manifest["hash_representation"] == "canonical_lf_bytes"
+    assert manifest["hash_input"] == "Exact artifact bytes; LF line endings only; any CR byte is invalid."
+    assert set(manifest["artifacts"]) == {
+        "questions.json",
+        "ground_truth.json",
+        "datasets/module3_sales.csv",
+        "datasets/module3_sales_direct.csv",
+    }
+    assert all(entry["path"] == key for key, entry in manifest["artifacts"].items())
+
+
+def test_runtime_integrity_rejects_mismatching_artifact_bytes(tmp_path, monkeypatch):
+    benchmark_dir = tmp_path / "insightflow_bench_v1.0"
+    (benchmark_dir / "datasets").mkdir(parents=True)
+    source_dir = ROOT / "data" / "evaluation" / "insightflow_bench_v1.0"
+    for relative_path in (
+        "questions.json", "ground_truth.json",
+        "datasets/module3_sales.csv", "datasets/module3_sales_direct.csv",
+    ):
+        shutil.copyfile(source_dir / relative_path, benchmark_dir / relative_path)
+    freeze_path = tmp_path / "step7_freeze_v1.0.json"
+    shutil.copyfile(STEP7_DIR / "step7_freeze_v1.0.json", freeze_path)
+    manifest_path = tmp_path / "artifact_hashes_v2.8.2_v1.0.json"
+    shutil.copyfile(STEP7_DIR / "artifact_hashes_v2.8.2_v1.0.json", manifest_path)
+    monkeypatch.setattr(official_benchmark, "BENCHMARK_DIRECTORY", benchmark_dir)
+    monkeypatch.setattr(official_benchmark, "STEP7_FREEZE_PATH", freeze_path)
+    monkeypatch.setattr(official_benchmark, "CANONICAL_HASH_MANIFEST_PATH", manifest_path)
+    target = benchmark_dir / "questions.json"
+    target.write_bytes(target.read_bytes() + b" ")
+    with pytest.raises(BenchmarkValidationErrorV28, match="does not match the Step 7 hash"):
+        verify_official_benchmark_hashes()
+
+
+def test_runtime_integrity_rejects_crlf_artifact_bytes(tmp_path, monkeypatch):
+    benchmark_dir = tmp_path / "insightflow_bench_v1.0"
+    (benchmark_dir / "datasets").mkdir(parents=True)
+    source_dir = ROOT / "data" / "evaluation" / "insightflow_bench_v1.0"
+    for relative_path in (
+        "questions.json", "ground_truth.json",
+        "datasets/module3_sales.csv", "datasets/module3_sales_direct.csv",
+    ):
+        shutil.copyfile(source_dir / relative_path, benchmark_dir / relative_path)
+    target = benchmark_dir / "questions.json"
+    target.write_bytes(target.read_bytes().replace(b"\n", b"\r\n"))
+    freeze_path = tmp_path / "step7_freeze_v1.0.json"
+    shutil.copyfile(STEP7_DIR / "step7_freeze_v1.0.json", freeze_path)
+    manifest_path = tmp_path / "artifact_hashes_v2.8.2_v1.0.json"
+    shutil.copyfile(STEP7_DIR / "artifact_hashes_v2.8.2_v1.0.json", manifest_path)
+    monkeypatch.setattr(official_benchmark, "BENCHMARK_DIRECTORY", benchmark_dir)
+    monkeypatch.setattr(official_benchmark, "STEP7_FREEZE_PATH", freeze_path)
+    monkeypatch.setattr(official_benchmark, "CANONICAL_HASH_MANIFEST_PATH", manifest_path)
+    with pytest.raises(BenchmarkValidationErrorV28, match="not canonical LF"):
+        verify_official_benchmark_hashes()
 
 
 def test_preregistered_injection_schedule_matches_frozen_cases():
