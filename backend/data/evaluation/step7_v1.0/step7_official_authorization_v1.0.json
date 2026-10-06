@@ -1,0 +1,23 @@
+{
+  "authorization_record_version": "1.0",
+  "authorization_status": "AUTHORIZED",
+  "experiment": {
+    "name": "InsightFlow AI V2.8.2 Official Step 7",
+    "benchmark_id": "InsightFlow-Bench",
+    "benchmark_version": "1.0",
+    "case_count": 100,
+    "error_injection_schedule_id": "error_injection_schedule_v1.0",
+    "scheduled_error_injection_case_count": 4
+  },
+  "frozen_artifacts": {
+    "benchmark_freeze_sha256": "e8505f10a62d1c7a6dc068f34d9382ab3451bdc3da4777794b52255ebf8f6705",
+    "implementation_commit": "25de205a6d96cdd578d1999474ff41fd68316a77",
+    "freeze_record_path": "backend/data/evaluation/step7_v1.0/step7_freeze_v2.8.2_v1.0.json",
+    "freeze_record_sha256": "b116a3e21c57746dad8321e6bb1b009c8bf781ee8db66abf67dbdf3ef8cafe0a"
+  },
+  "approval": {
+    "research_owner_identity": "Gaurav Thakare",
+    "approval_timestamp_utc": "2026-10-06T14:08:12Z",
+    "approval_statement": "I, Gaurav Thakare, authorize execution of the frozen InsightFlow AI V2.8.2 Official Step 7 experiment bound to the benchmark freeze SHA-256 e8505f10a62d1c7a6dc068f34d9382ab3451bdc3da4777794b52255ebf8f6705, implementation commit 25de205a6d96cdd578d1999474ff41fd68316a77, and V2.8.2 freeze-record SHA-256 b116a3e21c57746dad8321e6bb1b009c8bf781ee8db66abf67dbdf3ef8cafe0a. This authorization covers exactly 100 benchmark cases and the four scheduled error-injection cases under the frozen protocol. It does not authorize changes to the benchmark, ground truth, metrics, conditions, evaluator, or experiment protocol."
+  }
+}
