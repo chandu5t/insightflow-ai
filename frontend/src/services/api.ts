@@ -4,6 +4,7 @@ import type { ApiErrorBody } from "../types/api";
 import type { DatasetPreviewResponse, DatasetSummary } from "../types/dataset";
 import type { DatasetProfileResponse } from "../types/profile";
 import type { QueryResponse } from "../types/query";
+import type { VisualizationRequest, VisualizationResponse } from "../types/visualization";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
@@ -130,4 +131,46 @@ export function askQuestion(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ dataset_id: datasetId, question }),
   }) as Promise<QueryResponse>;
+}
+
+export function visualizeAnalysis(
+  payload: VisualizationRequest,
+): Promise<VisualizationResponse> {
+  return request("/analysis/visualize", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  }) as Promise<VisualizationResponse>;
+}
+
+export interface DemoWorkflowError {
+  stage: string;
+  code: string;
+  message: string;
+  [key: string]: unknown;
+}
+
+export interface DemoWorkflowResponse {
+  status: "completed" | "unsupported" | "failed";
+  question: string;
+  dataset_id: string;
+  stages: Record<string, string>;
+  planner_response: unknown | null;
+  analysis_plan: unknown | null;
+  execution_result: unknown | null;
+  verification_result: unknown | null;
+  correction_result: unknown | null;
+  final_plan: unknown | null;
+  final_execution_result: unknown | null;
+  final_verification_result: unknown | null;
+  visualization_result: VisualizationResponse | null;
+  errors: DemoWorkflowError[];
+}
+
+export function runDemoWorkflow(datasetId: string, question: string): Promise<DemoWorkflowResponse> {
+  return request("/analysis/workflow", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dataset_id: datasetId, question }),
+  }) as Promise<DemoWorkflowResponse>;
 }

@@ -1,0 +1,163 @@
+{
+  "freeze_record_version": "final-v1.0",
+  "protocol": "InsightFlow V2.8 Step 7 with approved V2.8.2 semantic execution amendment",
+  "status": "FROZEN_NOT_AUTHORIZED_FOR_OFFICIAL_EXECUTION",
+  "authorization": {
+    "official_step7_authorized": false,
+    "reason": "The V2.8.2 implementation and reproducibility source revision are frozen. This record does not itself authorize official Step 7 execution; separate research-owner authorization is required.",
+    "historical_diagnostic_runs": "Retain as historical diagnostic artifacts; they are not V2.8.2 experimental results and must not be represented as such."
+  },
+  "amendment": {
+    "version": "V2.8.2",
+    "document": "docs/V2.8.2_SEMANTIC_EXECUTION_AMENDMENT.md",
+    "document_sha256": "d87e8f1b5e8a90501a3034237d093a87c66f973b7520f9346e80d41e3e59c874",
+    "approved_semantic_decisions": true,
+    "implementation_source_git_commit": "25de205a6d96cdd578d1999474ff41fd68316a77",
+    "implementation_source_git_commit_status": "COMMITTED_REPRODUCIBILITY_SOURCE_REVISION",
+    "current_baseline_source_git_commit": "25de205a6d96cdd578d1999474ff41fd68316a77",
+    "current_checkout_worktree_clean": false,
+    "current_checkout_note": "The implementation source is the committed revision above and was verified in a fresh clean worktree at that exact commit. The user's primary checkout contains separate Step 7 runner/batching and Gemini diagnostic work plus diagnostic outputs; these are excluded from the V2.8.2 implementation source revision."
+  },
+  "benchmark_freeze": {
+    "benchmark_id": "InsightFlow-Bench",
+    "benchmark_version": "1.0",
+    "question_count": 100,
+    "ground_truth_version": "1.0",
+    "dataset_version": "1.0",
+    "logical_content_unchanged_from_v2_8_1_freeze": true,
+    "prior_hash_interpretation": "The V2.8.1 record's artifact hashes fingerprinted CRLF working-tree bytes. This record uses canonical LF bytes from the exact Git implementation revision; parsed JSON/CSV content and benchmark semantics are unchanged.",
+    "unchanged_from_v2_8_1_freeze": true,
+    "v2_8_1_freeze_file": "backend/data/evaluation/step7_v1.0/step7_freeze_v2.8.1_v1.0.json",
+    "v2_8_1_freeze_sha256": "5868126b755359375ea6a24770b167bdb3668b0038dd05722f70b6efcb91af93",
+    "sha256": {
+      "questions.json": "17be92ea96bb6f362bf713c5866c699be43dbb18237e45fd8332130da966f609",
+      "ground_truth.json": "44325519055340438c736832862939a35c4583e4ba87fb738e17b6853dd15f44",
+      "datasets/module3_sales.csv": "677847de4659edd0da00411ee20d7d1eeaf7e2e6dab922bdf66681e682e93061",
+      "datasets/module3_sales_direct.csv": "76256f36b1440fd9d5a5e2ba9832ff89b621ba33cdf8442b36978ab85a139ced"
+    }
+  },
+  "hash_representation": {
+    "kind": "canonical_lf_bytes",
+    "manifest_file": "backend/data/evaluation/step7_v1.0/artifact_hashes_v2.8.2_v1.0.json",
+    "manifest_sha256": "e8505f10a62d1c7a6dc068f34d9382ab3451bdc3da4777794b52255ebf8f6705",
+    "rule": "SHA-256 is computed over exact file bytes with LF line endings only; any CR byte is invalid.",
+    "clarification_document": "docs/V2.8.2_CANONICAL_LF_REPRODUCIBILITY_CLARIFICATION.md",
+    "clarification_document_sha256": "26bdfab14813d7ea4033f6ee63c6c59078942d3bd36e9b95db51e3ebdece12eb"
+  },
+  "semantic_manifests": {
+    "registry_file": "backend/app/planner/semantic_manifest.py",
+    "registry_sha256": "2ca09fd60915ee87710d049d302db61177d746a7704be2c76a26209c4327cbe6",
+    "manifest_version": "insightflow-bench-v1.0-semantic-v1",
+    "snapshot_bindings": {
+      "datasets/module3_sales.csv": {
+        "dataset_sha256": "677847de4659edd0da00411ee20d7d1eeaf7e2e6dab922bdf66681e682e93061",
+        "exact_physical_columns": {
+          "order_id": "identifier",
+          "order_date": "date",
+          "product": "categorical",
+          "category": "categorical",
+          "quantity": "additive_measure",
+          "unit_price": "non_additive_measure",
+          "region": "categorical"
+        },
+        "approved_additive_product": ["quantity", "unit_price"]
+      },
+      "datasets/module3_sales_direct.csv": {
+        "dataset_sha256": "76256f36b1440fd9d5a5e2ba9832ff89b621ba33cdf8442b36978ab85a139ced",
+        "exact_physical_columns": {
+          "Order ID": "identifier",
+          "Product Name": "categorical",
+          "Quantity": "additive_measure",
+          "Total Revenue": "additive_measure",
+          "Region": "categorical"
+        },
+        "header_policy": "Exact physical CSV header strings only; no normalization or aliases."
+      }
+    }
+  },
+  "v2_8_2_semantics": {
+    "ordered_dates": {
+      "format": "Strict calendar date YYYY-MM-DD for literals and non-missing values.",
+      "eligibility": "Only exact physical columns with trusted semantic role date.",
+      "on_or_before": "lte D",
+      "inclusive_range": "gte D1 AND lte D2",
+      "calendar_month": "First day inclusive through first day of next month exclusive; e.g. January 2025 is gte 2025-01-01 AND lt 2025-02-01.",
+      "invalid_bounds": "Malformed/impossible bounds and reversed ranges fail validation.",
+      "missing_dates": "Do not match ordered predicates; only explicit is_missing may select them.",
+      "invalid_non_missing_values": "Strict parse failure causes operation failure; no partial result.",
+      "prohibited": ["timestamps", "timezone conversion", "locale parsing", "trimming", "coercion", "new predicate operators"]
+    },
+    "grouped_count": {
+      "meaning": "Count source rows in each successful group; do not count groups, unique values, or non-null values.",
+      "dependency": "Exactly one successful group_by dependency.",
+      "missing_group": "Count rows assigned to (missing).",
+      "ordering": "Deterministic sorted group order.",
+      "output_schema": "{kind:grouped_count,groups:[{key:string,value:integer},...]}",
+      "empty_input": "{kind:grouped_count,groups:[]}",
+      "unmodified": "Root/raw row count unchanged; count(column) remains undefined by this amendment."
+    },
+    "metric_definition_registry": {
+      "status": "Implemented and frozen in the V2.8.2 source revision.",
+      "registry_file": "backend/app/planner/metric_registry.py",
+      "registry_version": "insightflow-metric-registry-v1",
+      "registry_sha256": "c01a9f04839005f0f96ef0b11e5d087df193018878251faa722630590ff97213",
+      "key_fields": ["dataset_sha256", "metric_key", "definition_version", "manifest_version", "exact physical column references", "structured allowed expression", "output semantic role", "source/reference metadata"],
+      "module3_sales_revenue": {
+        "dataset_sha256": "677847de4659edd0da00411ee20d7d1eeaf7e2e6dab922bdf66681e682e93061",
+        "expression": "quantity × unit_price",
+        "output_semantic_role": "additive_measure"
+      },
+      "module3_sales_direct_revenue": {
+        "dataset_sha256": "76256f36b1440fd9d5a5e2ba9832ff89b621ba33cdf8442b36978ab85a139ced",
+        "exact_column_reference": "Total Revenue",
+        "output_semantic_role": "additive_measure"
+      },
+      "prohibited_inputs": ["benchmark IDs", "benchmark questions", "ground truth", "expected answers", "observed benchmark results"]
+    }
+  },
+  "v2_4_verification_configuration": {
+    "numeric_tolerance_source": "Existing V2.4 implementation ABSOLUTE_TOLERANCE",
+    "absolute_tolerance": 1e-9,
+    "relative_tolerance": 0.0,
+    "comparison": "math.isclose with rel_tol=0.0 and abs_tol=1e-9",
+    "date_verification": "Independent recomputation from exact snapshot, trusted date manifest, strict grammar, and V2.8.2 boundaries.",
+    "grouped_count_verification": "Independently replay the supported table-producing dependency chain and recompute from the exact successful upstream group_by input; compare the complete ordered grouped_count structure without using ground truth or trusting the executor result.",
+    "registry_metric_verification": "Validate registry/hash/manifest binding; independently compute allowed expression; never use ground truth or executor output as expected value.",
+    "status_and_failure_model": "Preserve existing V2.4 passed/failed/unsupported semantics, status precedence, and structured failure behavior."
+  },
+  "unchanged_research_protocol": {
+    "v2_5": "Unchanged; no correction strategy, eligibility, budget, or terminal behavior change.",
+    "benchmark_questions_ground_truth_datasets": "Unchanged; hashes retained from the V2.8.1 freeze.",
+    "rq_hypotheses_metrics": "RQ1-RQ6, H1-H6, and M1-M10 unchanged.",
+    "conditions_baselines_ablations": "Unchanged from the V2.8.1 freeze.",
+    "error_taxonomy_injection_schedule_statistics": "E1-E15, error-injection schedule, and statistical procedure unchanged from the V2.8.1 freeze.",
+    "prior_diagnostic_runs": "Historical diagnostic artifacts only; not V2.8.2 results and not reportable experimental evidence."
+  },
+  "protocol_immutability": {
+    "benchmark_questions_ground_truth_datasets": "Verified against the frozen V2.8.1 values recorded above; unchanged.",
+    "evaluator_scoring_logic": "Unchanged.",
+    "benchmark_applicability_and_exclusion_rules": "Unchanged.",
+    "error_injection_schedule": "Unchanged; frozen schedule SHA-256 is recorded above.",
+    "v2_8_1_benchmark_protocol": "Unchanged; V2.8.2 adds execution semantics only and does not alter the protocol.",
+    "v2_5_self_correction": "Unchanged, including eligibility, budget, and terminal behavior."
+  },
+  "isolation": {
+    "planner_benchmark_or_ground_truth_access": false,
+    "verifier_ground_truth_access": false,
+    "benchmark_specific_runtime_hardcoding": false,
+    "metric_registry_scope": "Authorized dataset/metric metadata only; no benchmark IDs, questions, expected answers, or observed results."
+  },
+  "validation": {
+    "type": "software verification only; not research or benchmark results",
+    "command": "python -B -m pytest tests/test_step7_freeze.py tests/test_run_step7_entrypoint.py tests/test_v282_trusted_planner_context.py tests/test_v282_date_semantics.py tests/test_v282_grouped_count.py tests/test_planner_api.py tests/test_planner_validator.py tests/test_planner_service.py tests/test_planner_evaluation.py tests/test_v281_semantic_execution.py tests/test_multi_agent_v23.py tests/test_verification_v24.py tests/test_self_correction_v25.py tests/test_evaluation.py tests/test_evaluation_runner.py tests/test_evaluation_metrics.py tests/test_evaluation_benchmark.py tests/test_evaluation_config.py -q -p no:cacheprovider",
+    "result": "217 passed, 1 warning, 0 failed",
+    "warning": "Starlette TestClient deprecation warning for anyio.abc.BlockingPortal alias.",
+    "implementation_revision": "25de205a6d96cdd578d1999474ff41fd68316a77",
+    "execution_environment": "Fresh clean managed worktree at implementation_revision; Python 3.12.7; existing C:\\dev\\insightflow-ai\\backend\\.venv; no API/benchmark requests made."
+  },
+  "official_experiment": {
+    "status": "NOT_YET_RUN",
+    "authorized_by_this_freeze_record": false,
+    "run_identifiers": []
+  }
+}

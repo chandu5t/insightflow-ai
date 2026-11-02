@@ -4,6 +4,7 @@ import DatasetProfile from "../components/DatasetProfile";
 import FileUpload from "../components/FileUpload";
 import HealthStatus from "../components/HealthStatus";
 import QuestionPanel from "../components/QuestionPanel";
+import VisualizationRequestPanel from "../components/VisualizationRequestPanel";
 import type { DatasetSummary } from "../types/dataset";
 import "../styles/dataset.css";
 import "../styles/profile.css";
@@ -19,8 +20,8 @@ function Dashboard() {
   }
 
   function handleUploadStart() {
-  setDataset(null);
-  setShowProfile(false);
+    setDataset(null);
+    setShowProfile(false);
   }
 
   return (
@@ -84,8 +85,15 @@ function Dashboard() {
       {dataset && (
         <section className="card">
           <h2>4. Ask a question</h2>
-          {/* key resets the question, the answer and any error when a new dataset is uploaded */}
+          {/* key makes React start fresh when a new file is uploaded */}
           <QuestionPanel key={dataset.dataset_id} datasetId={dataset.dataset_id} />
+        </section>
+      )}
+
+      {dataset && (
+        <section className="card">
+          <h2>5. Run verified V2 analysis and visualize</h2>
+          <VisualizationRequestPanel key={dataset.dataset_id} datasetId={dataset.dataset_id} />
         </section>
       )}
     </main>

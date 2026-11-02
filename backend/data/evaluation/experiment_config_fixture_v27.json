@@ -1,0 +1,23 @@
+{
+  "experiment_id": "smoke_exp_001",
+  "benchmark_id": "insightflow_bench_fixture",
+  "benchmark_version": "1.0",
+  "dataset_version": "1.0",
+  "system_version": "2.7.0",
+  "configuration_version": "1.1",
+  "condition": "system_d_full_v2",
+  "model_name": "mock-planner-model",
+  "model_version": "v2.7-test",
+  "model_configuration": {"temperature": 0.0},
+  "prompt_configuration_version": "v2.7",
+  "random_seed": 42,
+  "case_selection": ["Q001", "Q003"],
+  "metric_version": "v2.1",
+  "evaluation_configuration": {
+    "tolerance": 0.000001,
+    "development_fixture": true,
+    "retriever_mode": "stub",
+    "dataset_mapping": {"sales_01.csv": "00000000-0000-0000-0000-000000000000"}
+  },
+  "output_dir": "data/evaluation/runs"
+}

@@ -1,0 +1,439 @@
+"""Structural validation for V2.2 plans. This is not an execution validator."""
+
+from collections import defaultdict
+import math
+
+from app.planner.operations import OPERATION_REGISTRY
+from app.planner.date_semantics import date_predicate_errors
+from app.planner.metric_registry import REGISTERED_METRIC_KEYS
+from app.planner.schemas import AnalysisPlan, MetricDefinitionContext, PlanValidationError
+
+_FILTER_OPERATORS = {"eq", "ne", "lt", "lte", "gt", "gte", "in", "not_in", "is_missing", "is_not_missing"}
+_BINARY_EXPR = {"add", "subtract", "multiply", "divide"}
+_COMPARE_OPERATORS = {"lt", "lte", "eq", "gte", "gt"}
+
+
+def _expression_errors(expr: object) -> list[str]:
+    if not isinstance(expr, dict):
+        return ["formula must be a structured arithmetic expression tree"]
+    if set(expr) == {"literal"}:
+        value = expr["literal"]
+        try:
+            finite = math.isfinite(float(value))
+        except (OverflowError, TypeError, ValueError):
+            finite = False
+        return [] if isinstance(value, (int, float)) and not isinstance(value, bool) and finite else ["numeric literals must be finite"]
+    if set(expr) == {"column"}:
+        return [] if isinstance(expr["column"], str) and expr["column"] else ["column reference must be non-empty"]
+    if set(expr) == {"step_id"}:
+        return [] if isinstance(expr["step_id"], str) and expr["step_id"] else ["step reference must be non-empty"]
+    if expr.get("op") == "negate" and set(expr) == {"op", "value"}:
+        return _expression_errors(expr["value"])
+    if isinstance(expr.get("op"), str) and expr.get("op") in _BINARY_EXPR and set(expr) == {"op", "left", "right"}:
+        return _expression_errors(expr["left"]) + _expression_errors(expr["right"])
+    return ["formula contains an unsupported expression node or field"]
+
+
+def _expression_step_refs(expr: object) -> set[str]:
+    if not isinstance(expr, dict):
+        return set()
+    if set(expr) == {"step_id"} and isinstance(expr["step_id"], str):
+        return {expr["step_id"]}
+    refs: set[str] = set()
+    for key in ("left", "right", "value"):
+        if key in expr:
+            refs.update(_expression_step_refs(expr[key]))
+    return refs
+
+
+def _expression_columns(expr: object) -> set[str]:
+    if not isinstance(expr, dict):
+        return set()
+    if set(expr) == {"column"} and isinstance(expr["column"], str):
+        return {expr["column"]}
+    cols: set[str] = set()
+    for key in ("left", "right", "value"):
+        if key in expr:
+            cols.update(_expression_columns(expr[key]))
+    return cols
+
+
+def _uses_product_pair(expr: object, references: set[str]) -> bool:
+    if not isinstance(expr, dict):
+        return False
+    if expr.get("op") == "multiply" and references.issubset(_expression_columns(expr)):
+        return True
+    return any(_uses_product_pair(expr.get(key), references) for key in ("left", "right", "value"))
+
+
+def _operation_parameter_errors(step) -> list[tuple[str, str]]:
+    p, op = step.parameters, step.operation
+    errors: list[tuple[str, str]] = []
+    if op == "filter_rows":
+        mode = p.get("mode", "predicate")
+        if mode == "exact_duplicate_rows":
+            if p.get("keep") != "first" or "conditions" in p:
+                errors.append(("INVALID_FILTER_MODE", "exact duplicate mode requires keep='first' and no conditions."))
+        elif mode == "predicate":
+            if "keep" in p:
+                errors.append(("INVALID_FILTER_MODE", "keep is valid only for exact_duplicate_rows mode."))
+            conditions = p.get("conditions")
+            if not isinstance(conditions, list) or not conditions:
+                errors.append(("INVALID_FILTER_PREDICATE", "predicate mode requires non-empty conditions."))
+            else:
+                for condition in conditions:
+                    if not isinstance(condition, dict) or set(condition) - {"column", "operator", "value"}:
+                        errors.append(("INVALID_FILTER_PREDICATE", "predicate fields are invalid.")); break
+                    operator = condition.get("operator")
+                    if not isinstance(condition.get("column"), str) or not condition["column"] or not isinstance(operator, str) or operator not in _FILTER_OPERATORS:
+                        errors.append(("INVALID_FILTER_PREDICATE", "predicate column or operator is invalid.")); break
+                    missing_op = operator in {"is_missing", "is_not_missing"}
+                    if missing_op == ("value" in condition):
+                        errors.append(("INVALID_FILTER_PREDICATE", "missing predicates take no value; other predicates require one.")); break
+                    if operator in {"in", "not_in"} and (not isinstance(condition.get("value"), list) or not condition["value"]):
+                        errors.append(("INVALID_FILTER_PREDICATE", "in/not_in require a non-empty list.")); break
+                    if operator not in {"in", "not_in", "is_missing", "is_not_missing"} and isinstance(condition.get("value"), list):
+                        errors.append(("INVALID_FILTER_PREDICATE", "Scalar comparison operators require one scalar value.")); break
+        else:
+            errors.append(("INVALID_FILTER_MODE", "filter_rows mode is unsupported."))
+    elif op == "derive_metric":
+        expression_errors = _expression_errors(p.get("formula"))
+        if expression_errors:
+            errors.append(("INVALID_METRIC_EXPRESSION", expression_errors[0]))
+        for ref in _expression_step_refs(p.get("formula")):
+            if ref not in step.depends_on:
+                errors.append(("INVALID_METRIC_DEPENDENCY", "Each step reference in the formula must be a declared dependency."))
+        formula_columns = _expression_columns(p.get("formula"))
+        if formula_columns and set(step.inputs) != formula_columns:
+            errors.append(("INVALID_METRIC_INPUTS", "derive_metric inputs must exactly match formula column references."))
+        if not isinstance(p.get("output_name"), str) or not p["output_name"]:
+            errors.append(("INVALID_METRIC_OUTPUT", "derive_metric requires a non-empty output_name."))
+    elif op == "aggregate":
+        if p.get("function") != "sum":
+            errors.append(("UNSUPPORTED_AGGREGATE", "Only sum is supported."))
+        if len(step.inputs) != 1:
+            errors.append(("INVALID_AGGREGATE_INPUT", "aggregate requires exactly one input value."))
+    elif op == "calculate_percentage_difference" and len(step.depends_on) != 2:
+        errors.append(("INVALID_PERCENTAGE_DIFFERENCE_INPUT", "percentage difference requires exactly two prior steps."))
+    elif op == "compare_groups":
+        if not isinstance(p.get("comparator"), str) or p.get("comparator") not in _COMPARE_OPERATORS:
+            errors.append(("INVALID_COMPARATOR", "compare_groups comparator is unsupported."))
+        for side in ("left", "right"):
+            operand = p.get(side)
+            if not isinstance(operand, dict) or set(operand) != {"step_id", "selector", "multiplier"}:
+                errors.append(("INVALID_COMPARISON_OPERAND", f"{side} requires step_id, selector, and multiplier.")); continue
+            ref = operand["step_id"]
+            if not isinstance(ref, str) or not ref or ref not in step.depends_on:
+                errors.append(("INVALID_COMPARISON_DEPENDENCY", f"{side} reference must be a declared dependency."))
+            multiplier = operand["multiplier"]
+            try:
+                finite_multiplier = math.isfinite(float(multiplier))
+            except (OverflowError, TypeError, ValueError):
+                finite_multiplier = False
+            if not isinstance(multiplier, (int, float)) or isinstance(multiplier, bool) or not finite_multiplier:
+                errors.append(("INVALID_COMPARISON_OPERAND", f"{side} multiplier must be finite."))
+            selector = operand["selector"]
+            valid_selector = selector == "scalar"
+            valid_selector |= isinstance(selector, dict) and set(selector) == {"kind", "key"} and selector.get("kind") == "group_key" and isinstance(selector.get("key"), str)
+            valid_selector |= isinstance(selector, dict) and set(selector) == {"kind", "index", "field"} and selector.get("kind") == "list_item" and isinstance(selector.get("index"), int) and not isinstance(selector.get("index"), bool) and selector.get("index", -1) >= 0 and isinstance(selector.get("field"), str)
+            valid_selector |= isinstance(selector, dict) and selector == {"kind": "leader"}
+            if not valid_selector:
+                errors.append(("INVALID_COMPARISON_SELECTOR", f"{side} selector is unsupported."))
+    return errors
+
+
+def validate_plan(
+    plan: AnalysisPlan,
+    *,
+    authorized_metric_definitions: list[MetricDefinitionContext] | tuple[MetricDefinitionContext, ...] | None = None,
+    semantic_roles: dict[str, str] | None = None,
+    dataset_columns: list[str] | tuple[str, ...] | None = None,
+) -> list[PlanValidationError]:
+    errors: list[PlanValidationError] = []
+    first_by_id: dict[str, int] = {}
+    for index, step in enumerate(plan.steps):
+        if step.step_id in first_by_id:
+            errors.append(PlanValidationError(
+                code="DUPLICATE_STEP_ID", message=f"Duplicate step ID: {step.step_id}", step_id=step.step_id
+            ))
+        else:
+            first_by_id[step.step_id] = index
+
+    dependencies: dict[str, list[str]] = defaultdict(list)
+    by_id = {step.step_id: step for step in plan.steps}
+
+    def depends_on_step(step, target_id: str) -> bool:
+        pending = list(step.depends_on)
+        visited: set[str] = set()
+        while pending:
+            current = pending.pop()
+            if current == target_id:
+                return True
+            if current in visited:
+                continue
+            visited.add(current)
+            parent = by_id.get(current)
+            if parent is not None:
+                pending.extend(parent.depends_on)
+        return False
+
+    for index, step in enumerate(plan.steps):
+        operation = OPERATION_REGISTRY.get(step.operation)
+        if operation is None:
+            errors.append(PlanValidationError(
+                code="UNKNOWN_OPERATION", message=f"Unsupported operation: {step.operation}", step_id=step.step_id
+            ))
+        else:
+            missing = [name for name in operation.required_parameters if name not in step.parameters]
+            if missing:
+                errors.append(PlanValidationError(
+                    code="MISSING_REQUIRED_PARAMETER",
+                    message=f"Operation '{step.operation}' requires parameter(s): {', '.join(missing)}",
+                    step_id=step.step_id,
+                ))
+            unexpected = [name for name in step.parameters if name not in operation.allowed_parameters]
+            if unexpected:
+                errors.append(PlanValidationError(
+                    code="UNSUPPORTED_PARAMETER",
+                    message=f"Operation '{step.operation}' does not allow parameter(s): {', '.join(sorted(unexpected))}",
+                    step_id=step.step_id,
+                ))
+
+            for code, message in _operation_parameter_errors(step):
+                errors.append(PlanValidationError(code=code, message=message, step_id=step.step_id))
+
+            # Reject logical metric names wherever an operation expects a physical
+            # source column. A registered metric is consumable only after derivation.
+            if dataset_columns is not None:
+                physical = set(dataset_columns)
+                if step.operation == "select_columns":
+                    selected = step.inputs or step.parameters.get("columns", [])
+                    for column in selected if isinstance(selected, list) else []:
+                        if isinstance(column, str) and column not in physical:
+                            errors.append(PlanValidationError(
+                                code="UNKNOWN_PHYSICAL_COLUMN",
+                                message=f"'{column}' is not an exact physical dataset column; derive a registered logical metric before consuming it.",
+                                step_id=step.step_id,
+                            ))
+                elif step.operation == "filter_rows":
+                    conditions = step.parameters.get("conditions", [])
+                    for condition in conditions if isinstance(conditions, list) else []:
+                        column = condition.get("column") if isinstance(condition, dict) else None
+                        if isinstance(column, str) and column not in physical:
+                            errors.append(PlanValidationError(
+                                code="UNKNOWN_PHYSICAL_COLUMN",
+                                message=f"'{column}' is not an exact physical dataset column.",
+                                step_id=step.step_id,
+                            ))
+                elif step.operation == "group_by":
+                    column = step.parameters.get("column")
+                    if isinstance(column, str) and column not in physical:
+                        errors.append(PlanValidationError(
+                            code="UNKNOWN_PHYSICAL_COLUMN",
+                            message="group_by requires an exact physical grouping column.",
+                            step_id=step.step_id,
+                        ))
+                    if isinstance(column, str) and column not in step.inputs:
+                        errors.append(PlanValidationError(
+                            code="INVALID_GROUP_BY_INPUT",
+                            message="group_by inputs must include its exact physical grouping column.",
+                            step_id=step.step_id,
+                        ))
+                elif step.operation == "derive_metric":
+                    unknown = _expression_columns(step.parameters.get("formula")) - physical
+                    if unknown:
+                        errors.append(PlanValidationError(
+                            code="UNKNOWN_PHYSICAL_COLUMN",
+                            message="derive_metric formula references a column absent from the exact physical dataset schema.",
+                            step_id=step.step_id,
+                        ))
+                elif step.operation == "aggregate" and len(step.inputs) == 1:
+                    measure = step.inputs[0]
+                    if measure not in physical:
+                        derivations = [
+                            parent for parent in plan.steps[:index]
+                            if parent.operation == "derive_metric"
+                            and parent.parameters.get("output_name") == measure
+                            and depends_on_step(step, parent.step_id)
+                        ]
+                        definition = next(
+                            (item for item in (authorized_metric_definitions or ())
+                             if item.metric_key == measure),
+                            None,
+                        )
+                        if measure not in REGISTERED_METRIC_KEYS or definition is None:
+                            errors.append(PlanValidationError(
+                                code="UNAUTHORIZED_METRIC_EXPRESSION",
+                                message="A logical aggregate input must have an authorized dataset-bound metric definition.",
+                                step_id=step.step_id,
+                            ))
+                        matching_derivations = [
+                            item for item in derivations
+                            if definition is not None
+                            and item.parameters.get("formula") == definition.allowed_expression
+                        ]
+                        if not matching_derivations:
+                            errors.append(PlanValidationError(
+                                code="INVALID_DERIVED_METRIC_DEPENDENCY",
+                                message="aggregate requires the exact authorized derivation in its dependency chain.",
+                                step_id=step.step_id,
+                            ))
+                        if len(step.depends_on) == 1:
+                            parent = by_id.get(step.depends_on[0])
+                            if parent is not None and parent.operation == "group_by":
+                                if (len(parent.depends_on) != 1
+                                        or not any(item.step_id == parent.depends_on[0]
+                                                   for item in matching_derivations)):
+                                    errors.append(PlanValidationError(
+                                        code="INVALID_DERIVED_METRIC_DEPENDENCY",
+                                        message="Grouped aggregate must depend on a group_by step that consumes the authorized derived measure.",
+                                        step_id=step.step_id,
+                                    ))
+                            elif parent is None or parent.operation != "derive_metric" or parent.parameters.get("output_name") != measure:
+                                errors.append(PlanValidationError(
+                                    code="INVALID_DERIVED_METRIC_DEPENDENCY",
+                                    message="Scalar derived aggregate must directly depend on its authorized derive_metric step.",
+                                    step_id=step.step_id,
+                                ))
+                        else:
+                            errors.append(PlanValidationError(
+                                code="INVALID_DERIVED_METRIC_DEPENDENCY",
+                                message="A derived aggregate requires exactly one direct dependency.",
+                                step_id=step.step_id,
+                            ))
+                    elif semantic_roles is None or semantic_roles.get(measure) != "additive_measure":
+                        errors.append(PlanValidationError(
+                            code="NON_ADDITIVE_AGGREGATE_INPUT",
+                            message="aggregate may sum only a trusted additive physical measure.",
+                            step_id=step.step_id,
+                        ))
+
+            if operation.name == "filter_rows" and semantic_roles is not None:
+                conditions = step.parameters.get("conditions")
+                if isinstance(conditions, list):
+                    for code, message in date_predicate_errors(conditions, semantic_roles):
+                        errors.append(PlanValidationError(code=code, message=message, step_id=step.step_id))
+
+            if operation.name == "derive_metric" and authorized_metric_definitions is not None:
+                output_name = step.parameters.get("output_name")
+                formula = step.parameters.get("formula")
+                for definition in authorized_metric_definitions:
+                    references = set(definition.exact_column_references)
+                    if (
+                        definition.output_semantic_role == "additive_measure"
+                        and len(references) > 1
+                        and _uses_product_pair(formula, references)
+                    ):
+                        if output_name != definition.metric_key or formula != definition.allowed_expression:
+                            errors.append(PlanValidationError(
+                                code="UNAUTHORIZED_METRIC_EXPRESSION",
+                                message="A registered additive metric product must use its exact authorized expression and metric key.",
+                                step_id=step.step_id,
+                            ))
+                if output_name in REGISTERED_METRIC_KEYS:
+                    authorized = next((item for item in authorized_metric_definitions if item.metric_key == output_name), None)
+                    if authorized is None:
+                        errors.append(PlanValidationError(
+                            code="UNAUTHORIZED_METRIC_EXPRESSION",
+                            message="A registered metric cannot be derived without its trusted dataset-bound definition.",
+                            step_id=step.step_id,
+                        ))
+                    elif formula != authorized.allowed_expression:
+                            errors.append(PlanValidationError(
+                                code="UNAUTHORIZED_METRIC_EXPRESSION",
+                                message="The derived metric expression does not exactly match its trusted registry definition.",
+                                step_id=step.step_id,
+                            ))
+            elif (dataset_columns is not None and operation.name == "derive_metric"
+                  and step.parameters.get("output_name") in REGISTERED_METRIC_KEYS):
+                errors.append(PlanValidationError(
+                    code="UNAUTHORIZED_METRIC_EXPRESSION",
+                    message="A registered metric cannot be derived without its trusted dataset-bound definition.",
+                    step_id=step.step_id,
+                ))
+
+        if step.operation == "count" and step.depends_on:
+            if len(step.depends_on) != 1:
+                errors.append(PlanValidationError(
+                    code="INVALID_GROUPED_COUNT_DEPENDENCY",
+                    message="Grouped count requires exactly one group_by dependency.",
+                    step_id=step.step_id,
+                ))
+            else:
+                dependency = next(
+                    (item for item in plan.steps if item.step_id == step.depends_on[0]),
+                    None,
+                )
+                if dependency is None or dependency.operation != "group_by":
+                    errors.append(PlanValidationError(
+                        code="INVALID_GROUPED_COUNT_DEPENDENCY",
+                        message="Grouped count must depend on a group_by step.",
+                        step_id=step.step_id,
+                    ))
+            if "column" in step.parameters:
+                errors.append(PlanValidationError(
+                    code="UNSUPPORTED_COUNT_COLUMN",
+                    message="Grouped count counts source rows and does not define count(column).",
+                    step_id=step.step_id,
+                ))
+
+        for dependency in step.depends_on:
+            if dependency == step.step_id:
+                errors.append(PlanValidationError(
+                    code="SELF_DEPENDENCY", message="A step cannot depend on itself.", step_id=step.step_id
+                ))
+            if dependency not in first_by_id and not any(item.step_id == dependency for item in plan.steps):
+                errors.append(PlanValidationError(
+                    code="UNKNOWN_DEPENDENCY", message=f"Dependency references unknown step: {dependency}", step_id=step.step_id
+                ))
+                continue
+            dependencies[step.step_id].append(dependency)
+            dependency_index = next((i for i, item in enumerate(plan.steps) if item.step_id == dependency), None)
+            if dependency_index is not None and dependency_index >= index:
+                errors.append(PlanValidationError(
+                    code="INVALID_DEPENDENCY_ORDER",
+                    message=f"Dependency '{dependency}' must appear before step '{step.step_id}'.",
+                    step_id=step.step_id,
+                ))
+
+    # DFS over known IDs; a forward acyclic reference is reported as ordering-invalid,
+    # while a cycle receives its own explicit error as well.
+    visiting: set[str] = set()
+    visited: set[str] = set()
+    cycle_steps: set[str] = set()
+
+    def visit(step_id: str, trail: list[str]) -> None:
+        if step_id in visiting:
+            cycle_steps.update(trail[trail.index(step_id):] if step_id in trail else [step_id])
+            return
+        if step_id in visited:
+            return
+        visiting.add(step_id)
+        for dependency in dependencies.get(step_id, []):
+            if dependency in first_by_id:
+                visit(dependency, [*trail, dependency])
+        visiting.remove(step_id)
+        visited.add(step_id)
+
+    for step in plan.steps:
+        visit(step.step_id, [step.step_id])
+    for step_id in sorted(cycle_steps, key=lambda value: first_by_id.get(value, 0)):
+        errors.append(PlanValidationError(
+            code="CIRCULAR_DEPENDENCY", message="The plan contains a circular dependency.", step_id=step_id
+        ))
+
+    if plan.intent == "unsupported_analysis":
+        if plan.reasoning_type != "unsupported":
+            errors.append(PlanValidationError(code="INVALID_UNSUPPORTED_OUTCOME", message="Unsupported analysis must use reasoning_type 'unsupported'."))
+        if plan.steps:
+            errors.append(PlanValidationError(code="INVALID_UNSUPPORTED_OUTCOME", message="Unsupported analysis must not contain executable steps."))
+        if not plan.unsupported_reason:
+            errors.append(PlanValidationError(code="MISSING_UNSUPPORTED_REASON", message="Unsupported analysis requires unsupported_reason."))
+    elif plan.reasoning_type == "unsupported":
+        errors.append(PlanValidationError(code="INVALID_UNSUPPORTED_OUTCOME", message="reasoning_type 'unsupported' requires intent 'unsupported_analysis'."))
+
+    if plan.intent == "metric_definition" and plan.reasoning_type != "definition":
+        errors.append(PlanValidationError(code="INVALID_REASONING_TYPE", message="Metric-definition intent requires reasoning_type 'definition'."))
+    if plan.reasoning_type == "definition" and plan.intent != "metric_definition":
+        errors.append(PlanValidationError(code="INVALID_REASONING_TYPE", message="reasoning_type 'definition' requires intent 'metric_definition'."))
+    return errors

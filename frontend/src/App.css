@@ -84,3 +84,36 @@ button {
 button:hover {
   background: #244d8f;
 }
+.visualization-request textarea {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  margin: 0.5rem 0 1rem;
+  padding: 0.75rem;
+  font: 0.875rem/1.45 ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.visualization-svg {
+  display: block;
+  width: 100%;
+  max-height: 28rem;
+  overflow: visible;
+}
+
+.chart-axis { stroke: #64748b; stroke-width: 1; }
+.chart-bar { fill: #2563eb; }
+.chart-line { fill: none; stroke: #2563eb; stroke-width: 3; }
+.chart-point { fill: #1d4ed8; stroke: white; stroke-width: 1.5; }
+.chart-svg text, .visualization-svg text { fill: #1e293b; font-size: 12px; }
+.chart-slice-0 { fill: #2563eb; }
+.chart-slice-1 { fill: #16a34a; }
+.chart-slice-2 { fill: #f59e0b; }
+.chart-slice-3 { fill: #db2777; }
+.chart-slice-4 { fill: #7c3aed; }
+.chart-slice-5 { fill: #0891b2; }
+.chart-slice-6 { fill: #ea580c; }
+.chart-slice-7 { fill: #4d7c0f; }
+.visualization-trace { color: #64748b; font-size: 0.8rem; }
+.visualization-status { padding: 0.75rem; border-radius: 0.35rem; }
+.visualization-unsupported { background: #fffbeb; color: #92400e; }
+.visualization-failed { background: #fef2f2; color: #991b1b; }

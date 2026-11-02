@@ -1,0 +1,26 @@
+{
+  "manifest_version": "insightflow-bench-canonical-lf-v1.0",
+  "benchmark_id": "InsightFlow-Bench",
+  "benchmark_version": "1.0",
+  "hash_algorithm": "SHA-256",
+  "hash_representation": "canonical_lf_bytes",
+  "hash_input": "Exact artifact bytes; LF line endings only; any CR byte is invalid.",
+  "artifacts": {
+    "questions.json": {
+      "path": "questions.json",
+      "sha256": "17be92ea96bb6f362bf713c5866c699be43dbb18237e45fd8332130da966f609"
+    },
+    "ground_truth.json": {
+      "path": "ground_truth.json",
+      "sha256": "44325519055340438c736832862939a35c4583e4ba87fb738e17b6853dd15f44"
+    },
+    "datasets/module3_sales.csv": {
+      "path": "datasets/module3_sales.csv",
+      "sha256": "677847de4659edd0da00411ee20d7d1eeaf7e2e6dab922bdf66681e682e93061"
+    },
+    "datasets/module3_sales_direct.csv": {
+      "path": "datasets/module3_sales_direct.csv",
+      "sha256": "76256f36b1440fd9d5a5e2ba9832ff89b621ba33cdf8442b36978ab85a139ced"
+    }
+  }
+}
