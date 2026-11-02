@@ -29,6 +29,17 @@ class OperationOutput:
     value: Any
     semantic_role: str = "unknown"
     lineage: list[dict[str, Any]] | None = None
+    derived_metrics: dict[str, dict[str, Any]] | None = None
+
+
+@dataclass
+class DerivedMetricValue:
+    """Internal row-aligned metric plus the exact table snapshot it belongs to."""
+
+    values: pd.Series
+    source_frame: pd.DataFrame
+    output_name: str
+    semantic_role: str
 
 
 def _successful_step_agent(state: WorkflowState, step_id: str):
@@ -62,6 +73,11 @@ def _eval_expression(expr: dict[str, Any], frame: pd.DataFrame, state: WorkflowS
         if prior is None:
             raise OperationFailure("Formula step reference is not a successful Analysis Agent result.")
         raw = state["step_results"][step_id]
+        if isinstance(raw, DerivedMetricValue):
+            number = pd.to_numeric(raw.values, errors="coerce")
+            if number.isna().any() or not np.isfinite(number.to_numpy(dtype=float)).all():
+                raise OperationFailure("Referenced formula values must be finite and non-missing.")
+            return number.astype(float), raw.semantic_role, [{"kind": "step", "step_id": step_id}]
         if isinstance(raw, pd.Series):
             number = pd.to_numeric(raw, errors="coerce")
             if number.isna().any() or not np.isfinite(number.to_numpy(dtype=float)).all():
@@ -127,6 +143,8 @@ def _comparison_value(agent: AgentResult, selector: Any) -> float:
 
 
 def _plain(value: Any) -> Any:
+    if isinstance(value, DerivedMetricValue):
+        return value.values.where(pd.notna(value.values), None).tolist()
     if isinstance(value, pd.DataFrame):
         return {"columns": list(value.columns), "rows": value.where(pd.notna(value), None).to_dict(orient="records")}
     if isinstance(value, pd.Series):
@@ -162,6 +180,7 @@ def _derive_frame_input(step, state: WorkflowState) -> pd.DataFrame:
     """Resolve at most one table dependency; numeric dependencies are expression operands."""
     values = _dependency_results(step, state)
     frames = [value for value in values if isinstance(value, pd.DataFrame)]
+    frames.extend(value.source_frame for value in values if isinstance(value, DerivedMetricValue))
     if len(frames) > 1:
         raise OperationFailure("derive_metric accepts at most one table dependency.")
     frame = frames[0] if frames else state.get("frame")
@@ -287,16 +306,50 @@ def execute_operation(step, state: WorkflowState) -> Any:
     if operation == "derive_metric":
         frame = _derive_frame_input(step, state)
         value, role, lineage = _eval_expression(params["formula"], frame, state)
+        plan = state.get("analysis_plan")
+        plan_by_id = {item.step_id: item for item in plan.steps} if plan is not None else {}
+        table_operations = {"select_columns", "filter_rows", "sort", "top_n", "bottom_n"}
+        table_lineage = [
+            {"kind": "step", "step_id": dependency}
+            for dependency in step.depends_on
+            if dependency in plan_by_id and plan_by_id[dependency].operation in table_operations
+        ]
+        lineage = [*table_lineage, *lineage]
         if isinstance(value, pd.Series):
             if not value.index.equals(frame.index) or value.isna().any() or not np.isfinite(value.to_numpy(dtype=float)).all():
                 raise OperationFailure("Derived values must be finite, non-missing, and row-aligned.")
             value = value.astype(float)
+            if params["output_name"] in frame.columns:
+                raise OperationFailure("A derived metric cannot replace a physical dataset column.")
             value.name = params["output_name"]
+            value = DerivedMetricValue(
+                values=value.copy(),
+                source_frame=frame.copy(),
+                output_name=params["output_name"],
+                semantic_role=role,
+            )
         elif not np.isfinite(float(value)):
             raise OperationFailure("Derived value must be finite.")
         return OperationOutput(value, role, lineage)
     if operation == "group_by":
-        frame = _frame_input(step, state)
+        derived_metrics: dict[str, dict[str, Any]] = {}
+        if len(values) > 1:
+            raise OperationFailure("group_by accepts at most one table or derived-measure dependency.")
+        if values and isinstance(values[0], DerivedMetricValue):
+            metric = values[0]
+            frame = metric.source_frame.copy()
+            if not metric.values.index.equals(frame.index):
+                raise OperationFailure("Derived values are not aligned to the grouping source rows.")
+            if metric.output_name in frame.columns:
+                raise OperationFailure("A derived metric cannot replace a physical grouping source column.")
+            frame[metric.output_name] = metric.values
+            dependency_id = step.depends_on[0]
+            derived_metrics[metric.output_name] = {
+                "source_step_id": dependency_id,
+                "semantic_role": metric.semantic_role,
+            }
+        else:
+            frame = _frame_input(step, state)
         column = params.get("column")
         if column is None and len(step.inputs) == 1:
             column = step.inputs[0]
@@ -309,7 +362,15 @@ def execute_operation(step, state: WorkflowState) -> Any:
             raise OperationFailure("Literal '(missing)' conflicts with the missing-group label.")
         keyed = frame.copy()
         keyed[column] = keyed[column].where(~missing, "(missing)")
-        return {str(key): group.copy() for key, group in keyed.groupby(column, dropna=False, sort=True)}
+        groups = {str(key): group.copy() for key, group in keyed.groupby(column, dropna=False, sort=True)}
+        if derived_metrics:
+            return OperationOutput(
+                groups,
+                "unknown",
+                [{"kind": "step", "step_id": dependency} for dependency in step.depends_on],
+                derived_metrics,
+            )
+        return groups
     if operation == "aggregate":
         if params.get("function") != "sum" or len(step.inputs) != 1:
             raise OperationFailure("aggregate supports sum over exactly one explicit value input.")
@@ -325,11 +386,19 @@ def execute_operation(step, state: WorkflowState) -> Any:
             if step.depends_on:
                 lineage.append({"kind": "step", "step_id": step.depends_on[0]})
             lineage.append({"kind": "column", "name": name})
+            role = manifest.role_for(name) if manifest else "unknown"
+            derived_metadata = (
+                upstream.metadata.get("derived_metrics", {})
+                if upstream is not None and isinstance(upstream.metadata.get("derived_metrics"), dict)
+                else {}
+            )
+            if role == "unknown":
+                role = derived_metadata.get(name, {}).get("semantic_role", "unknown")
             for key in sorted(raw):
                 group = raw[key]
                 if not isinstance(group, pd.DataFrame) or name not in group:
                     raise OperationFailure("Grouped aggregate source is unavailable.")
-                if manifest is None or manifest.role_for(name) != "additive_measure":
+                if role != "additive_measure":
                     raise OperationFailure("Only trusted additive measures may be summed.")
                 numbers = pd.to_numeric(group[name], errors="coerce")
                 if numbers.empty:
@@ -341,7 +410,14 @@ def execute_operation(step, state: WorkflowState) -> Any:
                     raise OperationFailure("Aggregate result must be finite.")
                 groups.append({"key": str(key), "value": group_total})
             return OperationOutput({"kind": "grouped", "groups": groups}, "additive_measure", lineage)
-        if isinstance(raw, pd.DataFrame) and name in raw:
+        if isinstance(raw, DerivedMetricValue):
+            series = raw.values
+            role = raw.semantic_role
+            prior = _successful_step_agent(state, step.depends_on[0]) if step.depends_on else None
+            lineage = list(prior.metadata.get("lineage", [])) if prior else []
+            if step.depends_on:
+                lineage.append({"kind": "step", "step_id": step.depends_on[0]})
+        elif isinstance(raw, pd.DataFrame) and name in raw:
             series = raw[name]
             role = manifest.role_for(name) if manifest else "unknown"
             prior = _successful_step_agent(state, step.depends_on[0]) if step.depends_on else None
@@ -545,6 +621,8 @@ class AnalysisAgent:
             return (AgentResult(agent_name=self.name, step_id=step.step_id, status="completed",
                                 result=_plain(raw_result), metadata={"operation": step.operation,
                                     "semantic_role": semantic_role, "lineage": lineage or [],
+                                    **({"derived_metrics": result.derived_metrics}
+                                       if isinstance(result, OperationOutput) and result.derived_metrics else {}),
                                     **({"output_name": step.parameters.get("output_name")}
                                        if step.operation == "derive_metric" else {})}), raw_result)
         except (OperationFailure, KeyError, TypeError, ValueError) as exc:

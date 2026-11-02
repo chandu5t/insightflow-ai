@@ -4,6 +4,7 @@ This file connects the small parts together (validator -> parser -> repository).
 It knows nothing about FastAPI, so it is easy to test.
 """
 
+import hashlib
 import logging
 import uuid
 from datetime import UTC, datetime
@@ -19,6 +20,10 @@ from app.services.file_parser import (
     parse_csv,
     parse_xlsx,
     read_preview,
+)
+from app.planner.semantic_manifest import (
+    reviewed_csv_snapshot_for_upload,
+    validate_semantic_manifest,
 )
 from app.utils.upload_validator import (
     detect_source_format,
@@ -48,12 +53,31 @@ def ingest_upload(
     temp_path = repository.new_temp_path(dataset_id)
 
     try:
+        # Inspect the raw CSV bytes before the parser normalizes line endings, quoting,
+        # or trailing empty cells. Only a complete record-for-record match to a
+        # hash-verified reviewed snapshot can select its canonical stored bytes.
+        reviewed_snapshot = (
+            reviewed_csv_snapshot_for_upload(data) if source_format == "csv" else None
+        )
         with temp_path.open("w", encoding="utf-8", newline="") as destination:
             result: ParseResult
             if source_format == "csv":
                 result = parse_csv(data, destination, limits)
             else:
                 result = parse_xlsx(data, destination, limits, settings.max_xlsx_uncompressed_bytes)
+
+        # Trusted uploads are stored as the exact reviewed snapshot, so later dataset
+        # fingerprinting and manifest lookup use the same canonical byte definition.
+        # All other uploads retain the normal parser output and remain untrusted.
+        if reviewed_snapshot is not None:
+            snapshot_bytes, manifest = reviewed_snapshot
+            snapshot_hash = hashlib.sha256(snapshot_bytes).hexdigest()
+            if manifest is not None and validate_semantic_manifest(
+                manifest,
+                dataset_sha256=snapshot_hash,
+                physical_columns=result.columns,
+            ):
+                temp_path.write_bytes(snapshot_bytes)
 
         metadata = DatasetMetadata(
             dataset_id=dataset_id,

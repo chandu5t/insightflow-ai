@@ -459,7 +459,9 @@ def _expression_lineage(expr: Any) -> list[dict[str, Any]]:
     return _expression_lineage(expr.get("left")) + _expression_lineage(expr.get("right"))
 
 
-def _expected_lineage(step, agent: AgentResult, result: MultiAgentResult) -> list[dict[str, Any]]:
+def _expected_lineage(
+    step, agent: AgentResult, result: MultiAgentResult, plan_by_id: dict[str, Any]
+) -> list[dict[str, Any]]:
     if step.operation in {"filter_rows", "group_by"}:
         if step.depends_on:
             return [{"kind": "step", "step_id": item} for item in step.depends_on]
@@ -469,7 +471,14 @@ def _expected_lineage(step, agent: AgentResult, result: MultiAgentResult) -> lis
             return []
         return [{"kind": "dataset", "dataset_id": dataset_agent.metadata["dataset_id"]}]
     if step.operation == "derive_metric":
-        return _expression_lineage(step.parameters.get("formula"))
+        lineage = _expression_lineage(step.parameters.get("formula"))
+        table_operations = {"select_columns", "filter_rows", "sort", "top_n", "bottom_n"}
+        return [
+            *[{"kind": "step", "step_id": dependency}
+              for dependency in step.depends_on
+              if dependency in plan_by_id and plan_by_id[dependency].operation in table_operations],
+            *lineage,
+        ]
     if step.operation == "aggregate":
         if step.depends_on:
             upstream = next((item for item in result.agent_results if item.agent_name == "analysis"
@@ -637,8 +646,111 @@ def _independent_table_input(
     raise VerificationMismatch("upstream dependency does not produce a verifiable table")
 
 
+def _independent_derived_metric_frame(
+    step, result: MultiAgentResult, plan_by_id: dict[str, Any],
+    by_step: dict[str, AgentResult], dataset_frame: pd.DataFrame, manifest,
+) -> pd.DataFrame:
+    """Rebuild a row-aligned derived measure from verifier-owned rows and the plan."""
+    if step.operation != "derive_metric":
+        raise VerificationMismatch("derived-measure dependency is not derive_metric")
+    source = _independent_table_input(
+        step, result, plan_by_id, by_step, dataset_frame, manifest
+    )
+    formula = step.parameters.get("formula")
+    metric_key = step.parameters.get("output_name")
+    if metric_key in REGISTERED_METRIC_KEYS:
+        definition = metric_definition_for_key(
+            manifest.dataset_sha256 if manifest is not None else "", metric_key
+        )
+        if (
+            manifest is None or definition is None
+            or not validate_metric_definition(
+                definition, dataset_sha256=manifest.dataset_sha256,
+                manifest=manifest, physical_columns=list(dataset_frame.columns),
+            )
+            or formula != definition.allowed_expression
+        ):
+            raise VerificationMismatch("derived metric does not match its trusted dataset-bound definition")
+        formula = definition.allowed_expression
+    expected, role = _reference_expression(
+        formula, source, manifest.columns if manifest else {}, by_step
+    )
+    if _approved_additive_product(formula, manifest):
+        role = "additive_measure"
+    if not isinstance(expected, pd.Series) or not expected.index.equals(source.index):
+        raise VerificationMismatch("derived measure is not row-aligned with its source table")
+    values = pd.to_numeric(expected, errors="coerce")
+    if values.isna().any() or not np.isfinite(values.to_numpy(dtype=float)).all():
+        raise VerificationMismatch("derived measure contains missing or nonfinite values")
+    output_name = step.parameters.get("output_name")
+    if not isinstance(output_name, str) or not output_name or output_name in source.columns:
+        raise VerificationMismatch("derived metric output name conflicts with the source schema")
+    source[output_name] = values.astype(float)
+    return source
+
+
+def _independent_grouping_input(
+    step, result: MultiAgentResult, plan_by_id: dict[str, Any],
+    by_step: dict[str, AgentResult], dataset_frame: pd.DataFrame, manifest,
+) -> pd.DataFrame:
+    """Rebuild the exact table entering group_by, including a verified derived measure."""
+    if len(step.depends_on) == 1:
+        parent = plan_by_id.get(step.depends_on[0])
+        if parent is None:
+            raise VerificationMismatch("group_by dependency is not present in the plan")
+        if parent.operation == "derive_metric":
+            agent = by_step.get(parent.step_id)
+            if (agent is None or agent.status != "completed"
+                    or agent.metadata.get("operation") != "derive_metric"
+                    or result.step_statuses.get(parent.step_id) != "completed"):
+                raise VerificationMismatch("group_by derived-measure dependency did not complete successfully")
+            return _independent_derived_metric_frame(
+                parent, result, plan_by_id, by_step, dataset_frame, manifest
+            )
+    return _independent_table_input(
+        step, result, plan_by_id, by_step, dataset_frame, manifest
+    )
+
+
+def _independent_operation_input(
+    step, result: MultiAgentResult, plan_by_id: dict[str, Any],
+    by_step: dict[str, AgentResult], dataset_frame: pd.DataFrame, manifest,
+) -> pd.DataFrame:
+    """Reconstruct the source rows consumed by derive/group/aggregate operations."""
+    if step.operation == "group_by":
+        return _independent_grouping_input(
+            step, result, plan_by_id, by_step, dataset_frame, manifest
+        )
+    if step.operation == "aggregate" and len(step.depends_on) == 1:
+        parent = plan_by_id.get(step.depends_on[0])
+        if parent is None:
+            raise VerificationMismatch("aggregate dependency is not present in the plan")
+        if parent.operation == "group_by":
+            agent = by_step.get(parent.step_id)
+            if (agent is None or agent.status != "completed"
+                    or agent.metadata.get("operation") != "group_by"
+                    or result.step_statuses.get(parent.step_id) != "completed"):
+                raise VerificationMismatch("aggregate group_by dependency did not complete successfully")
+            return _independent_grouping_input(
+                parent, result, plan_by_id, by_step, dataset_frame, manifest
+            )
+        if parent.operation == "derive_metric":
+            agent = by_step.get(parent.step_id)
+            if (agent is None or agent.status != "completed"
+                    or agent.metadata.get("operation") != "derive_metric"
+                    or result.step_statuses.get(parent.step_id) != "completed"):
+                raise VerificationMismatch("aggregate derived-measure dependency did not complete successfully")
+            return _independent_derived_metric_frame(
+                parent, result, plan_by_id, by_step, dataset_frame, manifest
+            )
+    return _independent_table_input(
+        step, result, plan_by_id, by_step, dataset_frame, manifest
+    )
+
+
 def _v281_expected(step, result: MultiAgentResult, frame: pd.DataFrame,
                    manifest, by_step: dict[str, AgentResult], *,
+                   plan_by_id: dict[str, Any] | None = None,
                    independent_table_input: pd.DataFrame | None = None) -> tuple[Any, Any, list[str]]:
     """Independent reference calculations for the V2.8.1 operation subset."""
     p, op = step.parameters, step.operation
@@ -706,28 +818,50 @@ def _v281_expected(step, result: MultiAgentResult, frame: pd.DataFrame,
         if p.get("function") != "sum" or len(step.inputs) != 1:
             raise ValueError("aggregate request is invalid")
         col = step.inputs[0]
-        raw: Any = frame
-        if dependencies:
-            raw = dependencies[0].result
+        raw: Any = independent_table_input if independent_table_input is not None else frame
         role = manifest.role_for(col) if manifest else "unknown"
-        if isinstance(raw, dict) and "columns" in raw and "rows" in raw:
-            raw = pd.DataFrame(raw["rows"], columns=raw["columns"])
-        if isinstance(raw, dict) and raw and all(isinstance(v, dict) and "columns" in v for v in raw.values()):
+        dependency_step = (
+            (plan_by_id or {}).get(step.depends_on[0])
+            if len(step.depends_on) == 1 else None
+        )
+        if dependency_step is not None and dependency_step.operation == "group_by":
+            if (dependency_step.parameters.get("column") not in raw.columns
+                    or col not in raw.columns):
+                raise ValueError("grouped aggregate source columns are unavailable")
+            grouping_column = dependency_step.parameters["column"]
+            role = role if role != "unknown" else "unknown"
+            if col not in manifest.columns if manifest is not None else True:
+                derived_agent = by_step.get(dependency_step.depends_on[0]) if len(dependency_step.depends_on) == 1 else None
+                if derived_agent is None or derived_agent.metadata.get("operation") != "derive_metric":
+                    raise ValueError("grouped aggregate input is not a trusted physical or derived measure")
+                definition = metric_definition_for_key(
+                    manifest.dataset_sha256 if manifest is not None else "", col
+                )
+                if definition is None or definition.output_semantic_role != "additive_measure":
+                    raise ValueError("grouped derived measure is not authorized as additive")
+                role = definition.output_semantic_role
+            if role != "additive_measure":
+                raise ValueError("grouped aggregate source is not trusted additive measure")
+            keyed = raw.copy()
+            missing = keyed[grouping_column].isna()
+            if missing.any() and keyed.loc[~missing, grouping_column].astype(str).eq("(missing)").any():
+                raise ValueError("missing group label collides with literal value")
+            keyed[grouping_column] = keyed[grouping_column].where(~missing, "(missing)")
             groups = []
-            for key in sorted(raw):
-                sub = pd.DataFrame(raw[key]["rows"], columns=raw[key]["columns"])
-                if role != "additive_measure" or col not in sub.columns:
-                    raise ValueError("grouped source is not a trusted additive measure")
+            for key, sub in keyed.groupby(grouping_column, sort=True, dropna=False):
                 nums = pd.to_numeric(sub[col], errors="coerce")
                 if nums.empty or nums.isna().any() or not np.isfinite(nums.to_numpy(dtype=float)).all():
                     raise ValueError("grouped values are empty, missing, or nonfinite")
                 groups.append({"key": str(key), "value": float(nums.sum())})
             return {"kind": "grouped", "groups": groups}, "dataset_snapshot+plan+dependencies+lineage", []
-        if isinstance(raw, list):
-            if dependencies[0].metadata.get("semantic_role") != "additive_measure":
-                raise ValueError("derived dependency is not typed additive")
-            nums = pd.to_numeric(pd.Series(raw), errors="coerce")
-        elif isinstance(raw, pd.DataFrame) and col in raw.columns:
+        if isinstance(raw, pd.DataFrame) and col in raw.columns:
+            if role == "unknown" and dependencies:
+                derived = by_step.get(step.depends_on[0])
+                if derived is not None and derived.metadata.get("operation") == "derive_metric":
+                    definition = metric_definition_for_key(
+                        manifest.dataset_sha256 if manifest is not None else "", col
+                    )
+                    role = definition.output_semantic_role if definition is not None else "unknown"
             if role != "additive_measure":
                 raise ValueError("source column is not a trusted additive measure")
             nums = pd.to_numeric(raw[col], errors="coerce")
@@ -793,13 +927,19 @@ def _semantic_operation_checks(plan: AnalysisPlan, result: MultiAgentResult,
                 if execution_context.metadata.get("dataset_sha256") != digest:
                     raise ValueError("execution and verification dataset snapshot hashes differ")
             independent_table_input = None
-            if step.operation in {"filter_rows", "group_by"}:
+            if step.operation in {"filter_rows", "derive_metric"}:
                 independent_table_input = _independent_table_input(
+                    step, result, plan_by_id, by_step,
+                    frame if frame is not None else pd.DataFrame(), manifest,
+                )
+            elif step.operation in {"group_by", "aggregate"}:
+                independent_table_input = _independent_operation_input(
                     step, result, plan_by_id, by_step,
                     frame if frame is not None else pd.DataFrame(), manifest,
                 )
             expected, source, dependency_ids = _v281_expected(
                 step, result, frame if frame is not None else pd.DataFrame(), manifest, by_step,
+                plan_by_id=plan_by_id,
                 independent_table_input=independent_table_input,
             )
             metric_evidence: dict[str, Any] = {}
@@ -826,7 +966,7 @@ def _semantic_operation_checks(plan: AnalysisPlan, result: MultiAgentResult,
                 raise ValueError("percentage output semantic role is invalid")
             if step.operation == "compare_groups" and agent.metadata.get("semantic_role") != "boolean":
                 raise ValueError("comparison output semantic role is invalid")
-            expected_lineage = _expected_lineage(step, agent, result)
+            expected_lineage = _expected_lineage(step, agent, result, plan_by_id)
             if not expected_lineage:
                 raise ValueError("lineage cannot be reconstructed from the validated plan and dependencies")
             if agent.metadata.get("lineage") != expected_lineage:

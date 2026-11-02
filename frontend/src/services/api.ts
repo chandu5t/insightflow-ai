@@ -142,3 +142,35 @@ export function visualizeAnalysis(
     body: JSON.stringify(payload),
   }) as Promise<VisualizationResponse>;
 }
+
+export interface DemoWorkflowError {
+  stage: string;
+  code: string;
+  message: string;
+  [key: string]: unknown;
+}
+
+export interface DemoWorkflowResponse {
+  status: "completed" | "unsupported" | "failed";
+  question: string;
+  dataset_id: string;
+  stages: Record<string, string>;
+  planner_response: unknown | null;
+  analysis_plan: unknown | null;
+  execution_result: unknown | null;
+  verification_result: unknown | null;
+  correction_result: unknown | null;
+  final_plan: unknown | null;
+  final_execution_result: unknown | null;
+  final_verification_result: unknown | null;
+  visualization_result: VisualizationResponse | null;
+  errors: DemoWorkflowError[];
+}
+
+export function runDemoWorkflow(datasetId: string, question: string): Promise<DemoWorkflowResponse> {
+  return request("/analysis/workflow", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dataset_id: datasetId, question }),
+  }) as Promise<DemoWorkflowResponse>;
+}

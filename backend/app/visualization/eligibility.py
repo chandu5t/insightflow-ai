@@ -39,6 +39,25 @@ def _json_safe(value: Any) -> bool:
 
 
 def _tabular(result: Any) -> tuple[list[str], list[dict[str, Any]]] | None:
+    if isinstance(result, dict) and set(result) == {"kind", "groups"}:
+        if result.get("kind") not in {"grouped", "grouped_count"} or not isinstance(result.get("groups"), list):
+            return None
+        groups = result["groups"]
+        normalized: list[dict[str, Any]] = []
+        keys: list[str] = []
+        for group in groups:
+            if not isinstance(group, dict) or set(group) != {"key", "value"}:
+                return None
+            key, value = group["key"], group["value"]
+            if not isinstance(key, str) or not _finite_number(value):
+                return None
+            if result["kind"] == "grouped_count" and (isinstance(value, bool) or not isinstance(value, int)):
+                return None
+            keys.append(key)
+            normalized.append({"key": key, "value": value})
+        if keys != sorted(keys) or len(keys) != len(set(keys)):
+            return None
+        return ["key", "value"], normalized
     if isinstance(result, dict) and isinstance(result.get("columns"), list) and isinstance(result.get("rows"), list):
         columns, rows = result["columns"], result["rows"]
         if not all(isinstance(column, str) for column in columns):

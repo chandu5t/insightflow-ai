@@ -147,6 +147,7 @@ def validate_plan(
     *,
     authorized_metric_definitions: list[MetricDefinitionContext] | tuple[MetricDefinitionContext, ...] | None = None,
     semantic_roles: dict[str, str] | None = None,
+    dataset_columns: list[str] | tuple[str, ...] | None = None,
 ) -> list[PlanValidationError]:
     errors: list[PlanValidationError] = []
     first_by_id: dict[str, int] = {}
@@ -159,6 +160,23 @@ def validate_plan(
             first_by_id[step.step_id] = index
 
     dependencies: dict[str, list[str]] = defaultdict(list)
+    by_id = {step.step_id: step for step in plan.steps}
+
+    def depends_on_step(step, target_id: str) -> bool:
+        pending = list(step.depends_on)
+        visited: set[str] = set()
+        while pending:
+            current = pending.pop()
+            if current == target_id:
+                return True
+            if current in visited:
+                continue
+            visited.add(current)
+            parent = by_id.get(current)
+            if parent is not None:
+                pending.extend(parent.depends_on)
+        return False
+
     for index, step in enumerate(plan.steps):
         operation = OPERATION_REGISTRY.get(step.operation)
         if operation is None:
@@ -183,6 +201,112 @@ def validate_plan(
 
             for code, message in _operation_parameter_errors(step):
                 errors.append(PlanValidationError(code=code, message=message, step_id=step.step_id))
+
+            # Reject logical metric names wherever an operation expects a physical
+            # source column. A registered metric is consumable only after derivation.
+            if dataset_columns is not None:
+                physical = set(dataset_columns)
+                if step.operation == "select_columns":
+                    selected = step.inputs or step.parameters.get("columns", [])
+                    for column in selected if isinstance(selected, list) else []:
+                        if isinstance(column, str) and column not in physical:
+                            errors.append(PlanValidationError(
+                                code="UNKNOWN_PHYSICAL_COLUMN",
+                                message=f"'{column}' is not an exact physical dataset column; derive a registered logical metric before consuming it.",
+                                step_id=step.step_id,
+                            ))
+                elif step.operation == "filter_rows":
+                    conditions = step.parameters.get("conditions", [])
+                    for condition in conditions if isinstance(conditions, list) else []:
+                        column = condition.get("column") if isinstance(condition, dict) else None
+                        if isinstance(column, str) and column not in physical:
+                            errors.append(PlanValidationError(
+                                code="UNKNOWN_PHYSICAL_COLUMN",
+                                message=f"'{column}' is not an exact physical dataset column.",
+                                step_id=step.step_id,
+                            ))
+                elif step.operation == "group_by":
+                    column = step.parameters.get("column")
+                    if isinstance(column, str) and column not in physical:
+                        errors.append(PlanValidationError(
+                            code="UNKNOWN_PHYSICAL_COLUMN",
+                            message="group_by requires an exact physical grouping column.",
+                            step_id=step.step_id,
+                        ))
+                    if isinstance(column, str) and column not in step.inputs:
+                        errors.append(PlanValidationError(
+                            code="INVALID_GROUP_BY_INPUT",
+                            message="group_by inputs must include its exact physical grouping column.",
+                            step_id=step.step_id,
+                        ))
+                elif step.operation == "derive_metric":
+                    unknown = _expression_columns(step.parameters.get("formula")) - physical
+                    if unknown:
+                        errors.append(PlanValidationError(
+                            code="UNKNOWN_PHYSICAL_COLUMN",
+                            message="derive_metric formula references a column absent from the exact physical dataset schema.",
+                            step_id=step.step_id,
+                        ))
+                elif step.operation == "aggregate" and len(step.inputs) == 1:
+                    measure = step.inputs[0]
+                    if measure not in physical:
+                        derivations = [
+                            parent for parent in plan.steps[:index]
+                            if parent.operation == "derive_metric"
+                            and parent.parameters.get("output_name") == measure
+                            and depends_on_step(step, parent.step_id)
+                        ]
+                        definition = next(
+                            (item for item in (authorized_metric_definitions or ())
+                             if item.metric_key == measure),
+                            None,
+                        )
+                        if measure not in REGISTERED_METRIC_KEYS or definition is None:
+                            errors.append(PlanValidationError(
+                                code="UNAUTHORIZED_METRIC_EXPRESSION",
+                                message="A logical aggregate input must have an authorized dataset-bound metric definition.",
+                                step_id=step.step_id,
+                            ))
+                        matching_derivations = [
+                            item for item in derivations
+                            if definition is not None
+                            and item.parameters.get("formula") == definition.allowed_expression
+                        ]
+                        if not matching_derivations:
+                            errors.append(PlanValidationError(
+                                code="INVALID_DERIVED_METRIC_DEPENDENCY",
+                                message="aggregate requires the exact authorized derivation in its dependency chain.",
+                                step_id=step.step_id,
+                            ))
+                        if len(step.depends_on) == 1:
+                            parent = by_id.get(step.depends_on[0])
+                            if parent is not None and parent.operation == "group_by":
+                                if (len(parent.depends_on) != 1
+                                        or not any(item.step_id == parent.depends_on[0]
+                                                   for item in matching_derivations)):
+                                    errors.append(PlanValidationError(
+                                        code="INVALID_DERIVED_METRIC_DEPENDENCY",
+                                        message="Grouped aggregate must depend on a group_by step that consumes the authorized derived measure.",
+                                        step_id=step.step_id,
+                                    ))
+                            elif parent is None or parent.operation != "derive_metric" or parent.parameters.get("output_name") != measure:
+                                errors.append(PlanValidationError(
+                                    code="INVALID_DERIVED_METRIC_DEPENDENCY",
+                                    message="Scalar derived aggregate must directly depend on its authorized derive_metric step.",
+                                    step_id=step.step_id,
+                                ))
+                        else:
+                            errors.append(PlanValidationError(
+                                code="INVALID_DERIVED_METRIC_DEPENDENCY",
+                                message="A derived aggregate requires exactly one direct dependency.",
+                                step_id=step.step_id,
+                            ))
+                    elif semantic_roles is None or semantic_roles.get(measure) != "additive_measure":
+                        errors.append(PlanValidationError(
+                            code="NON_ADDITIVE_AGGREGATE_INPUT",
+                            message="aggregate may sum only a trusted additive physical measure.",
+                            step_id=step.step_id,
+                        ))
 
             if operation.name == "filter_rows" and semantic_roles is not None:
                 conditions = step.parameters.get("conditions")
@@ -215,11 +339,18 @@ def validate_plan(
                             step_id=step.step_id,
                         ))
                     elif formula != authorized.allowed_expression:
-                        errors.append(PlanValidationError(
-                            code="UNAUTHORIZED_METRIC_EXPRESSION",
-                            message="The derived metric expression does not exactly match its trusted registry definition.",
-                            step_id=step.step_id,
+                            errors.append(PlanValidationError(
+                                code="UNAUTHORIZED_METRIC_EXPRESSION",
+                                message="The derived metric expression does not exactly match its trusted registry definition.",
+                                step_id=step.step_id,
                             ))
+            elif (dataset_columns is not None and operation.name == "derive_metric"
+                  and step.parameters.get("output_name") in REGISTERED_METRIC_KEYS):
+                errors.append(PlanValidationError(
+                    code="UNAUTHORIZED_METRIC_EXPRESSION",
+                    message="A registered metric cannot be derived without its trusted dataset-bound definition.",
+                    step_id=step.step_id,
+                ))
 
         if step.operation == "count" and step.depends_on:
             if len(step.depends_on) != 1:

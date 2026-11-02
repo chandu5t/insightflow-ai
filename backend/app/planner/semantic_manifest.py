@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import csv
+import io
 from dataclasses import dataclass
 from pathlib import Path
 import re
@@ -56,11 +57,77 @@ _MANIFESTS: dict[str, DatasetSemanticManifest] = {
         ),
 }
 
+_REVIEWED_SNAPSHOT_PATHS: dict[str, Path] = {
+    "677847de4659edd0da00411ee20d7d1eeaf7e2e6dab922bdf66681e682e93061": (
+        Path(__file__).resolve().parents[2]
+        / "data/evaluation/insightflow_bench_v1.0/datasets/module3_sales.csv"
+    ),
+    "76256f36b1440fd9d5a5e2ba9832ff89b621ba33cdf8442b36978ab85a139ced": (
+        Path(__file__).resolve().parents[2]
+        / "data/evaluation/insightflow_bench_v1.0/datasets/module3_sales_direct.csv"
+    ),
+}
+
 
 def semantic_manifest_for_snapshot(dataset_sha256: str) -> DatasetSemanticManifest | None:
     """Return the application-reviewed manifest bound to a snapshot hash."""
     manifest = _MANIFESTS.get(dataset_sha256)
     return manifest
+
+
+def reviewed_csv_snapshot_for_upload(
+    upload_bytes: bytes,
+) -> tuple[bytes, DatasetSemanticManifest] | None:
+    """Match a CSV upload to a reviewed snapshot before lossy upload normalization.
+
+    Exact bytes match directly. Alternate CSV line endings or quoting match only when the
+    complete parsed record sequence equals the reviewed snapshot: exact headers/order,
+    every cell, duplicate rows, and missing cells. The returned bytes are always the
+    hash-verified reviewed snapshot, never the client-provided representation.
+    """
+    for expected_hash, snapshot_path in _REVIEWED_SNAPSHOT_PATHS.items():
+        manifest = _MANIFESTS.get(expected_hash)
+        if manifest is None or not snapshot_path.is_file():
+            continue
+        try:
+            snapshot_bytes = snapshot_path.read_bytes()
+        except OSError:
+            continue
+        if hashlib.sha256(snapshot_bytes).hexdigest() != expected_hash:
+            continue
+        try:
+            with snapshot_path.open("r", encoding="utf-8", newline="") as source:
+                physical_columns = next(csv.reader(source), None)
+        except (OSError, UnicodeDecodeError, csv.Error):
+            continue
+        if not physical_columns or not validate_semantic_manifest(
+            manifest,
+            dataset_sha256=expected_hash,
+            physical_columns=physical_columns,
+        ):
+            continue
+        if upload_bytes == snapshot_bytes or _csv_records_equal(upload_bytes, snapshot_bytes):
+            return snapshot_bytes, manifest
+    return None
+
+
+def _csv_records_equal(left_bytes: bytes, right_bytes: bytes) -> bool:
+    """Compare complete UTF-8 CSV records without header/value normalization."""
+    sentinel = object()
+    try:
+        left_text = left_bytes.decode("utf-8")
+        right_text = right_bytes.decode("utf-8")
+        left_reader = csv.reader(io.StringIO(left_text, newline=""), strict=True)
+        right_reader = csv.reader(io.StringIO(right_text, newline=""), strict=True)
+        while True:
+            left_row = next(left_reader, sentinel)
+            right_row = next(right_reader, sentinel)
+            if left_row is sentinel or right_row is sentinel:
+                return left_row is sentinel and right_row is sentinel
+            if left_row != right_row:
+                return False
+    except (UnicodeDecodeError, csv.Error):
+        return False
 
 
 def sha256_file(path: Path) -> str:

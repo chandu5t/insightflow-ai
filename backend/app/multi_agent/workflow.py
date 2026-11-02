@@ -60,6 +60,7 @@ class V23Workflow:
             state["analysis_plan"],
             semantic_roles=semantic_roles,
             authorized_metric_definitions=metric_definitions,
+            dataset_columns=physical_columns,
         )
         if validation_errors:
             errors = [WorkflowError(

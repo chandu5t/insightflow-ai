@@ -14,6 +14,25 @@ Use only the registered operations supplied in the user payload. Do not invent o
 Use caller-supplied metric definitions only; do not invent definitions. If any essential requested
 capability is unsupported, return intent=unsupported_analysis, reasoning_type=unsupported, steps=[],
 and a concise unsupported_reason. Do not silently answer only the supported part of a mixed request.
+Physical columns and logical metrics are distinct. A metric key that is not an exact physical
+column MUST be produced by a derive_metric step using its exact authorized expression before any
+downstream operation consumes it. Never put a logical metric key in select_columns as though it
+were a physical column. For a grouped logical metric, derive it first, group the row-aligned result
+by an exact physical category column, then aggregate that derived measure through the group_by
+dependency. The exact physical grouping column named by group_by.parameters.column MUST also be
+present in group_by.inputs. Do not aggregate a non-additive measure.
+When metric_definitions are supplied, copy the matching definition's allowed_expression exactly
+into derive_metric.parameters.formula, set output_name to its metric_key, and set inputs to its
+exact_column_references. Do not rewrite, simplify, or replace the expression. A downstream aggregate
+must use inputs=[metric_key] and depend on that exact derivation. For grouped aggregation, the
+group_by step must use an exact physical category column and depend on the derivation; the aggregate
+must depend on that group_by step and use inputs=[metric_key].
+Use exactly one dependency at each link in this derived grouped-aggregate chain:
+group_by.depends_on contains only the derive_metric step ID, and aggregate.depends_on contains
+only the group_by step ID. If select_columns is needed, derive_metric may depend on that table step;
+do not also list the table step directly in group_by.depends_on. The chain is optional
+select_columns -> derive_metric -> group_by -> aggregate, with each step depending only on its
+immediate predecessor. Do not add redundant or transitive dependency IDs.
 For a definition request use intent=metric_definition and reasoning_type=definition.
 For supported analytical requests use the controlled intent vocabulary and reasoning_type simple or
 multi_step. Give each step a unique step_id. Every dependency must refer to an earlier step ID.

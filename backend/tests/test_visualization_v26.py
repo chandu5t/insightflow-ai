@@ -113,6 +113,52 @@ def test_bar_preserves_fractional_values_and_every_row():
     assert response.visualization.metadata["output_row_count"] == len(rows)
 
 
+def test_verified_grouped_aggregate_result_is_normalized_without_recalculation():
+    plan = AnalysisPlan.model_validate({
+        "intent": "total_revenue", "reasoning_type": "multi_step", "steps": [
+            {"step_id": "group", "operation": "group_by", "description": "Group", "inputs": ["region"],
+             "parameters": {"column": "region"}, "depends_on": []},
+            {"step_id": "sum", "operation": "aggregate", "description": "Sum", "inputs": ["sales"],
+             "parameters": {"function": "sum"}, "depends_on": ["group"]},
+        ],
+    })
+    grouped = {"kind": "grouped", "groups": [
+        {"key": "North", "value": 10.5}, {"key": "South", "value": 20.25},
+    ]}
+    execution = MultiAgentResult.model_validate({
+        "workflow_status": "completed", "executed_steps": ["group", "sum"],
+        "step_statuses": {"group": "completed", "sum": "completed"},
+        "agent_results": [
+            {"agent_name": "data_understanding", "status": "completed", "result": {}, "metadata": {"dataset_id": str(DATASET_ID)}},
+            {"agent_name": "analysis", "step_id": "group", "status": "completed", "result": {"North": {}, "South": {}},
+             "metadata": {"operation": "group_by"}},
+            {"agent_name": "analysis", "step_id": "sum", "status": "completed", "result": grouped,
+             "metadata": {"operation": "aggregate"}},
+        ], "final_result": grouped, "errors": [],
+    })
+    verification = _verification("sum")
+    verification.verified_steps = ["group", "sum"]
+    request = _request(plan=plan, execution=execution, verification=verification)
+    response = visualize(request)
+    assert response.status == "generated"
+    assert response.visualization is not None
+    assert response.visualization.chart_type == "bar"
+    assert response.visualization.data == grouped["groups"]
+    assert response.visualization.traceability.source_step_id == "sum"
+
+
+@pytest.mark.parametrize("result", [
+    {"kind": "grouped", "groups": [{"key": "N", "value": float("nan")}]},
+    {"kind": "grouped", "groups": [{"key": "N", "value": 1}, {"key": "N", "value": 2}]},
+    {"kind": "grouped", "groups": [{"key": "N", "value": 1, "extra": True}]},
+    {"kind": "grouped", "groups": [{"key": "N", "value": 1}, {"key": "A", "value": 2}]},
+])
+def test_malformed_grouped_result_is_unsupported(result):
+    from app.visualization.eligibility import _tabular
+
+    assert _tabular(result) is None
+
+
 def test_line_uses_explicit_ordered_time_values():
     rows = [{"month": "2025-01-01", "value": 10}, {"month": "2025-02-01", "value": 20}]
     plan = _plan(inputs=["month", "value"])

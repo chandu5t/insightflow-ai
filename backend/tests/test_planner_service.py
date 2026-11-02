@@ -55,6 +55,25 @@ def test_retries_provider_failure_once_then_succeeds():
     assert result.valid and result.metadata.retry_used and len(model.calls) == 2
 
 
+def test_permission_denied_is_not_retried_and_safe_provider_details_are_returned():
+    model = SequenceModel(GeminiRequestError(
+        "ClientError",
+        provider_category="permission",
+        provider_http_status=403,
+        provider_exception_types=("ClientError",),
+    ))
+    with pytest.raises(AppError) as raised:
+        create_plan(PlannerRequest(question="What is revenue?"), llm_client=model)
+
+    assert raised.value.code == ErrorCode.LLM_PROVIDER_ERROR
+    assert raised.value.details["provider_diagnostics"] == {
+        "category": "permission",
+        "http_status": 403,
+        "exception_types": ["ClientError"],
+    }
+    assert len(model.calls) == 1
+
+
 def test_retries_unusable_output_once_then_returns_plan():
     model = SequenceModel("not json", generated())
     result = create_plan(PlannerRequest(question="What is revenue?"), llm_client=model)

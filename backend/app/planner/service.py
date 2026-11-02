@@ -37,6 +37,35 @@ def _parse_generated_plan(text: str) -> AnalysisPlan:
     return AnalysisPlan.model_validate(normalized)
 
 
+def _provider_failure_details(exc: Exception) -> dict[str, object] | None:
+    """Expose only normalized Gemini diagnostics; never provider text or request data."""
+    if not isinstance(exc, GeminiRequestError):
+        return None
+    details: dict[str, object] = {}
+    if isinstance(exc.provider_category, str):
+        details["category"] = exc.provider_category
+    if isinstance(exc.provider_http_status, int):
+        details["http_status"] = exc.provider_http_status
+    if exc.provider_exception_types:
+        details["exception_types"] = list(exc.provider_exception_types[:6])
+    return details or None
+
+
+def _is_retryable_provider_failure(exc: Exception) -> bool:
+    """Retry transient failures once; permanent HTTP responses are not retryable."""
+    if not isinstance(exc, GeminiRequestError):
+        return False
+    status = exc.provider_http_status
+    if status is not None:
+        return status in {408, 425, 429, 500, 502, 503, 504}
+    if exc.provider_category is not None:
+        return exc.provider_category in {
+            "connection", "timeout", "provider_server_error", "quota_or_rate_limit"
+        }
+    # Preserve the existing single retry for normalized errors without provider metadata.
+    return True
+
+
 def create_plan(
     request: PlannerRequest,
     *,
@@ -85,16 +114,35 @@ def create_plan(
         except Exception as exc:
             # GeminiRequestError is the client's normalized provider/network failure.
             # Unexpected adapter errors are made safe but are not retried as transient.
-            failure_category = "PLANNER_TIMEOUT" if isinstance(exc, GeminiRequestError) and "timeout" in exc.reason.lower() else "LLM_PROVIDER_ERROR"
-            if attempt == 0 and isinstance(exc, GeminiRequestError):
+            invalid_ca_override = (
+                isinstance(exc, GeminiRequestError)
+                and "SSL_CERT_FILE is invalid" in exc.reason
+            )
+            failure_category = (
+                "SSL_CERT_FILE_INVALID" if invalid_ca_override
+                else "PLANNER_TIMEOUT" if isinstance(exc, GeminiRequestError) and "timeout" in exc.reason.lower()
+                else "LLM_PROVIDER_ERROR"
+            )
+            if attempt == 0 and _is_retryable_provider_failure(exc) and not invalid_ca_override:
                 retry_used = True
                 continue
             latency = (time.perf_counter() - started) * 1000
             _log_failure(request, request_id, llm_client.model_name, retry_used, failure_category, latency)
             code = ErrorCode.PLANNER_TIMEOUT if failure_category == "PLANNER_TIMEOUT" else ErrorCode.LLM_PROVIDER_ERROR
-            status = 504 if failure_category == "PLANNER_TIMEOUT" else 502
-            raise AppError(code, "The planner model request failed.", status,
-                           {"failure_category": failure_category, "request_id": request_id}) from exc
+            status = 504 if failure_category == "PLANNER_TIMEOUT" else 503 if invalid_ca_override else 502
+            message = (
+                "The SSL_CERT_FILE override is invalid. Unset the stale process-level value or point it to a readable trusted CA bundle; TLS verification remains enabled."
+                if invalid_ca_override else "The planner model request failed."
+            )
+            provider_diagnostics = _provider_failure_details(exc)
+            details: dict[str, object] = {
+                "failure_category": failure_category,
+                "request_id": request_id,
+            }
+            if provider_diagnostics is not None:
+                details["provider_diagnostics"] = provider_diagnostics
+            raise AppError(code, message, status,
+                           details) from exc
 
         try:
             plan = _parse_generated_plan(raw)
@@ -115,6 +163,11 @@ def create_plan(
                 request.dataset_context.semantic_roles
                 if request.dataset_context is not None
                 else {}
+            ),
+            dataset_columns=(
+                request.dataset_context.columns
+                if request.dataset_context is not None
+                else None
             ),
         )
         latency = (time.perf_counter() - started) * 1000
